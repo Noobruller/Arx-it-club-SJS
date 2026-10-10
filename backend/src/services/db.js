@@ -1372,12 +1372,19 @@ class DatabaseStore {
       award: params.award ? params.award.trim() : undefined,
       motivationEssay: params.motivationEssay ? params.motivationEssay.trim() : (params.essay ? params.essay.trim() : undefined),
       essay: params.motivationEssay ? params.motivationEssay.trim() : (params.essay ? params.essay.trim() : undefined),
+      // AI essay screening (admin-visible)
+      aiEssayScore: params.aiEssayScore ?? 0,
+      aiEssaySuspected: params.aiEssaySuspected ?? false,
+      aiEssayFlags: params.aiEssayFlags ?? [],
+      aiEssayMethod: params.aiEssayMethod ?? 'skipped',
+      aiEssayAnalyzedAt: params.aiEssayAnalyzedAt ?? undefined,
       role: 'member',
       status: 'pending',
       isApproved: false,
       rejectionReason: undefined,
       createdAt: now,
       updatedAt: now
+
     };
 
     this.members.set(newMember.id, newMember);

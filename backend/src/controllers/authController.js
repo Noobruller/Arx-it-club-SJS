@@ -8,6 +8,7 @@ import { sendTelegramMessage } from './telegramController.js';
 import { validatePersonName, validateTelegramUsername } from '../utils/validationUtils.js';
 import { validateAndSaveAwardFile } from '../utils/awardFileUtils.js';
 import { sanitizeText } from '../utils/sanitizeUtils.js';
+import { analyzeEssay } from '../services/aiDetectionService.js';
 
 const VALID_GRADES = [
 '9A', '9B', '9C', '9D', '9E',
@@ -288,6 +289,19 @@ export const authController = {
       const rawEssay = motivationEssay || essay || paragraph;
       const cleanEssay = rawEssay && typeof rawEssay === 'string' && rawEssay.trim().length > 0 ? sanitizeText(rawEssay.trim()) : undefined;
 
+      // ── AI Essay Screening ───────────────────────────────────────────────
+      // Run in the background (non-blocking); result is stored on the member.
+      // Admins see the score — they make the final call, nothing is auto-rejected.
+      let aiAnalysis = { aiProbability: 0, isAI: false, flags: [], method: 'skipped', analyzedAt: new Date().toISOString() };
+      if (cleanEssay) {
+        try {
+          aiAnalysis = await analyzeEssay(cleanEssay);
+        } catch (aiErr) {
+          console.warn('[register] AI analysis failed silently:', aiErr.message);
+        }
+      }
+      // ────────────────────────────────────────────────────────────────────
+
       const newMember = db.createMember({
         firstName: cleanFirst,
         secondName: cleanSecond || undefined,
@@ -299,7 +313,13 @@ export const authController = {
         telegramUsername: normalizedTelegram,
         award: award ? sanitizeText(String(award).trim()) : undefined,
         motivationEssay: cleanEssay,
-        essay: cleanEssay
+        essay: cleanEssay,
+        // AI screening metadata (admin-visible, never auto-rejects)
+        aiEssayScore: aiAnalysis.aiProbability,
+        aiEssaySuspected: aiAnalysis.isAI,
+        aiEssayFlags: aiAnalysis.flags,
+        aiEssayMethod: aiAnalysis.method,
+        aiEssayAnalyzedAt: aiAnalysis.analyzedAt
       });
 
       // Save and attach any uploaded award files

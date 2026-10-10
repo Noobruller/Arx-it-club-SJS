@@ -26,8 +26,138 @@ import {
   Eye,
   Info,
   MessageSquare,
-  Quote
+  Quote,
+  Bot,
+  Zap
 } from 'lucide-react';
+
+// ── AI Score Badge Component ───────────────────────────────────────────────
+function AiScoreBadge({ score, suspected, compact = false }) {
+  if (score === undefined || score === null) return null;
+  const pct = Math.round(Number(score ?? 0) * 100);
+  const isHigh = pct >= 70;
+  const isMid = pct >= 40 && pct < 70;
+
+  if (compact) {
+    // Small badge for the table column
+    return (
+      <span
+        title={`AI probability: ${pct}%`}
+        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold border ${
+          isHigh
+            ? 'bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-400 border-red-200 dark:border-red-900/60'
+            : isMid
+            ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-900/60'
+            : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/60'
+        }`}
+      >
+        <Bot className="w-2.5 h-2.5" />
+        {pct}% AI
+      </span>
+    );
+  }
+
+  const appData = suspected || {};
+  const flags = Array.isArray(appData.aiEssayFlags) ? appData.aiEssayFlags : [];
+  const method = appData.aiEssayMethod || 'heuristic';
+  const analyzedAt = appData.aiEssayAnalyzedAt;
+
+  // Full panel badge (detail modal)
+  return (
+    <div
+      className={`rounded-xl border p-3.5 space-y-2.5 ${
+        isHigh
+          ? 'bg-red-50/70 dark:bg-red-950/30 border-red-200 dark:border-red-900/60'
+          : isMid
+          ? 'bg-amber-50/70 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/60'
+          : 'bg-emerald-50/60 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/40'
+      }`}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <span
+          className={`flex items-center gap-1.5 text-[10px] font-mono uppercase font-bold tracking-wider ${
+            isHigh
+              ? 'text-red-600 dark:text-red-400'
+              : isMid
+              ? 'text-amber-600 dark:text-amber-400'
+              : 'text-emerald-600 dark:text-emerald-400'
+          }`}
+        >
+          <Bot className="w-3.5 h-3.5" />
+          AI Essay Analysis
+        </span>
+        <span
+          className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-semibold ${
+            isHigh
+              ? 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300'
+              : isMid
+              ? 'bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300'
+              : 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300'
+          }`}
+        >
+          {isHigh ? '⚠️ Likely AI' : isMid ? '~ Moderate Risk' : '✓ Likely Human'}
+        </span>
+      </div>
+
+      {/* Score bar */}
+      <div className="space-y-1">
+        <div className="flex justify-between text-[10px] font-mono">
+          <span className="text-[#282828]/60 dark:text-[#7F9990]">AI Probability</span>
+          <span
+            className={`font-bold ${
+              isHigh
+                ? 'text-red-600 dark:text-red-400'
+                : isMid
+                ? 'text-amber-600 dark:text-amber-400'
+                : 'text-emerald-600 dark:text-emerald-400'
+            }`}
+          >
+            {pct}%
+          </span>
+        </div>
+        <div className="w-full h-2 rounded-full bg-[#282828]/10 dark:bg-white/10 overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all ${
+              isHigh
+                ? 'bg-red-500 dark:bg-red-500'
+                : isMid
+                ? 'bg-amber-500 dark:bg-amber-400'
+                : 'bg-emerald-500 dark:bg-emerald-400'
+            }`}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Flags */}
+      {flags.length > 0 && (
+        <ul className="space-y-1 pt-1">
+          {flags.map((flag, i) => (
+            <li
+              key={i}
+              className={`flex items-start gap-1.5 text-[11px] ${
+                isHigh ? 'text-red-700 dark:text-red-300' : 'text-amber-700 dark:text-amber-300'
+              }`}
+            >
+              <Zap className="w-3 h-3 mt-0.5 shrink-0" />
+              <span>{flag}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {/* Method + timestamp */}
+      <div className="flex items-center justify-between text-[9px] font-mono text-[#282828]/40 dark:text-[#7F9990] pt-1 border-t border-[#282828]/5 dark:border-white/5">
+        <span>Engine: {method}</span>
+        {analyzedAt && (
+          <span>{new Date(analyzedAt).toLocaleString()}</span>
+        )}
+      </div>
+    </div>
+  );
+}
+// ──────────────────────────────────────────────────────────────────────────
 
 export const ApplicationReviewView = ({
   applications = [],
@@ -451,9 +581,14 @@ export const ApplicationReviewView = ({
                           className="group cursor-pointer p-2 rounded-lg bg-[#FAF4EE]/70 dark:bg-[#0C241C] border border-[#282828]/10 dark:border-[#25473C] hover:border-[#FC6454]/40 dark:hover:border-[#6BB89E]/40 transition-colors"
                           title="Click to read full statement"
                         >
-                          <div className="flex items-center gap-1 text-[10px] font-mono text-[#FC6454] dark:text-[#6BB89E] mb-1 font-semibold">
-                            <MessageSquare className="w-3 h-3 shrink-0" />
-                            <span>Statement</span>
+                          <div className="flex items-center justify-between gap-1 mb-1">
+                            <div className="flex items-center gap-1 text-[10px] font-mono text-[#FC6454] dark:text-[#6BB89E] font-semibold">
+                              <MessageSquare className="w-3 h-3 shrink-0" />
+                              <span>Statement</span>
+                            </div>
+                            {app.aiEssayScore !== undefined && (
+                              <AiScoreBadge score={app.aiEssayScore} suspected={app} compact />
+                            )}
                           </div>
                           <p className="line-clamp-2 text-[11px] text-[#282828]/80 dark:text-[#B7C9C2] italic leading-snug group-hover:text-[#282828] dark:group-hover:text-[#F1F7F4]">
                             "{app.motivationEssay || app.essay}"
@@ -680,6 +815,14 @@ export const ApplicationReviewView = ({
                 </div>
               )}
             </div>
+
+            {/* AI Essay Analysis Panel */}
+            {selectedApp.aiEssayScore !== undefined && selectedApp.aiEssayMethod !== 'skipped' && (
+              <AiScoreBadge
+                score={selectedApp.aiEssayScore}
+                suspected={selectedApp}
+              />
+            )}
 
             {/* Submitted Awards / Supporting Info */}
             <div className="p-4 rounded-xl bg-white dark:bg-[#0C241C] border border-[#282828]/10 dark:border-[#25473C] space-y-2">
