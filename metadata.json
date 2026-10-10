@@ -1,0 +1,8 @@
+{
+  "name": "Remix Last #2 IT CLUB - Learn. Build. Grow.",
+  "description": "Official school IT Club website and member portal. Learn technology, build projects, attend workshops, and earn verified certificates.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
