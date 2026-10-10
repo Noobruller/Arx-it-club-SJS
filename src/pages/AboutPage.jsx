@@ -261,6 +261,7 @@ export const AboutPage = ({ navigate }) => {
             { name: 'Nathan W', role: 'Web Development', specialty: 'Web Development', img: '/team/nathan.jpg', pos: 'center top' },
             { name: 'Yohannes', role: 'AI & Machine Learning', specialty: 'Artificial Intelligence', img: '/team/yohannes.jpg', pos: 'center 25%' },
             { name: 'Natan Yonas', role: 'Robotics', specialty: 'Robotics Engineering', img: '/team/me.jpg', pos: 'center 10%' },
+            { name: 'Nathan Haddis', role: 'Member', specialty: 'Technology', img: '/team/nathan-haddis.jpg', pos: 'center 20%' },
           ].map((member, i) => (
             <div
               key={i}
