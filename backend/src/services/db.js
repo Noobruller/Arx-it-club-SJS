@@ -194,12 +194,27 @@ class DatabaseStore {
           }
         }
 
+        // 6. Activation Sessions
+        if (Array.isArray(data.activationSessions)) {
+          for (const s of data.activationSessions) {
+            if (s && s.token) this.activationSessions.set(s.token, s);
+          }
+        }
+
+        // 7. Telegram User States
+        if (Array.isArray(data.telegramUserStates)) {
+          for (const item of data.telegramUserStates) {
+            if (item && item.userId && item.state) this.telegramUserStates.set(item.userId, item.state);
+          }
+        }
+
         this.isFileHydrated = true;
         this.lastFileSync = Date.now();
         console.log('[FileDB] Loaded from arx_database.json:', {
           members: this.members.size,
           awardFiles: this.memberAwardFiles.size,
-          enrollments: this.enrollments.size
+          enrollments: this.enrollments.size,
+          activationSessions: this.activationSessions.size
         });
       } catch (err) {
         console.warn('[FileDB] Hydration error:', err?.message || err);
@@ -225,6 +240,8 @@ class DatabaseStore {
         courses: Array.from(this.courses.values()),
         enrollments: Array.from(this.enrollments.values()),
         awardFiles: Array.from(this.memberAwardFiles.values()),
+        activationSessions: Array.from(this.activationSessions.values()),
+        telegramUserStates: Array.from(this.telegramUserStates.entries()).map(([k, v]) => ({ userId: k, state: v }))
       };
       writeDb(snapshot);
     } catch (err) {
@@ -1262,9 +1279,16 @@ class DatabaseStore {
   }
 
   findMemberByMemberId(memberId) {
+    if (!memberId || typeof memberId !== 'string') return undefined;
     const cleanId = memberId.trim().toUpperCase();
+    const alphanumeric = cleanId.replace(/[^A-Z0-9]/g, '');
     for (const m of this.members.values()) {
-      if (m.memberId.toUpperCase() === cleanId) {
+      if (!m.memberId) continue;
+      const mUpper = m.memberId.toUpperCase();
+      if (mUpper === cleanId) {
+        return m;
+      }
+      if (alphanumeric.length >= 6 && mUpper.replace(/[^A-Z0-9]/g, '') === alphanumeric) {
         return m;
       }
     }
@@ -3878,6 +3902,41 @@ class DatabaseStore {
           { label: '✅ Verify Membership', action: '/verify_channel' }]
 
       };
+    }
+
+    // 23.5 MEMBER ID PATTERN LOOKUP
+    const cleanPossibleId = cmd.replace(/^\//, '').trim();
+    if (cleanPossibleId.startsWith('arx') || /^arx[-_\s][a-z0-9]{4}[-_\s][a-z0-9]{4}$/i.test(cleanPossibleId)) {
+      const found = this.findMemberByMemberId(cleanPossibleId);
+      if (found) {
+        if (found.status === 'pending') {
+          return {
+            reply: `👋 Hello, **${found.studentName}**!\n\n• **Member ID:** \`${found.memberId}\`\n• **Class:** ${found.class}\n• **Status:** ⏳ **Pending Admin Approval**\n\nYour application has been received and is waiting for administrator approval. Once approved, you will be able to activate your student credentials.\n\n📢 In the meantime, join our official announcement channel: ${channelHandle}`,
+            timestamp: time,
+            actions: [
+              { label: `📢 Join ${channelHandle}`, action: `navigate:${channelUrl}` },
+              { label: '📋 Main Menu', action: '/menu' }
+            ]
+          };
+        }
+        return {
+          reply: `👋 Hello, **${found.studentName}**!\n\n• **Member ID:** \`${found.memberId}\`\n• **Class:** ${found.class}\n• **Status:** ${found.status.toUpperCase()}\n\nYou can log in to the Member Portal with your Member ID and password:`,
+          timestamp: time,
+          actions: [
+            { label: '💻 Member Portal', action: `navigate:${websiteBaseUrl}/#login` },
+            { label: '📋 Main Menu', action: '/menu' }
+          ]
+        };
+      } else {
+        return {
+          reply: `⚠️ **Member ID Not Recognized**\n\nWe could not find any membership matching ID: \`${cleanPossibleId.toUpperCase()}\`.\n\nPlease check your registration confirmation for your assigned Member ID (e.g. \`ARX-XXXX_XXXX\`).`,
+          timestamp: time,
+          actions: [
+            { label: '🌐 Register Online', action: `navigate:${websiteBaseUrl}/#register` },
+            { label: '❓ Help & Commands', action: '/help' }
+          ]
+        };
+      }
     }
 
     // 24. UNKNOWN COMMAND HANDLER (Requirement 22 & 33)

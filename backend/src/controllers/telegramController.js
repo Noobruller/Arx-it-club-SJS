@@ -547,6 +547,142 @@ export async function processTelegramUpdate(update)
       }
     }
 
+    // 1.5 DIRECT MEMBER ID INPUT DETECTION
+    // Handles students typing their Member ID directly (e.g., "ARX-1102_B19B" or "arx-1102_b19b")
+    const cleanCandidateId = text.replace(/^\/(verify|activate)\s*/i, '').trim();
+    const isDirectMemberIdPattern =
+      (/^ARX[-_\s][A-Z0-9]{4}[-_\s][A-Z0-9]{4}$/i.test(cleanCandidateId) ||
+       /^ARX[-_]/i.test(cleanCandidateId) ||
+       Boolean(db.findMemberByMemberId(cleanCandidateId))) &&
+      !['/start', '/menu', '/help', '/status', '/cancel', '/stop', '/support', '/about', '/contact'].includes(cmd);
+
+    if (isDirectMemberIdPattern) {
+      console.log(`[Telegram Direct Member ID Input]: "${cleanCandidateId}" from numeric user ${numericUserId}`);
+      const member = db.findMemberByMemberId(cleanCandidateId);
+
+      if (!member) {
+        const notFoundMsg = `⚠️ *Member ID Not Recognized*\n\n` +
+          `We could not find any membership matching ID: \`${cleanCandidateId.toUpperCase()}\`.\n\n` +
+          `Please check your assigned Member ID from your registration screen (format: \`ARX-XXXX_XXXX\`).\n\n` +
+          `If you haven't registered yet, submit your application on our official portal:`;
+        const keyboard = [
+          [{ text: '🌐 Register Online', url: `${websiteBaseUrl}/#register` }],
+          [{ text: '❓ View Help & Commands', callback_data: 'cmd:/help' }]
+        ];
+        const sendResult = await sendTelegramMessage(chatId, notFoundMsg, { inline_keyboard: keyboard });
+        return { handled: true, action: 'DIRECT_MEMBER_ID_NOT_FOUND', responseSent: sendResult.success, chatId };
+      }
+
+      // Member exists! Check their approval status:
+      if (member.status === 'pending') {
+        const pendingMsg = `👋 Hello, *${member.studentName}*!\n\n` +
+          `• *Member ID:* \`${member.memberId}\`\n` +
+          `• *Class:* ${member.class}\n` +
+          `• *Status:* ⏳ *Pending Admin Approval*\n\n` +
+          `Your membership application has been received and is waiting for administrator approval.\n\n` +
+          `Once an admin approves your application, your account can be activated.\n\n` +
+          `📢 In the meantime, join our official announcement channel: *${channelHandle}*`;
+        const keyboard = [
+          [{ text: `📢 Join ${channelHandle}`, url: channelUrl }],
+          [{ text: '🔄 Check Status', callback_data: `cmd:/status` }]
+        ];
+        const sendResult = await sendTelegramMessage(chatId, pendingMsg, { inline_keyboard: keyboard });
+        return { handled: true, action: 'DIRECT_MEMBER_ID_PENDING', responseSent: sendResult.success, chatId };
+      }
+
+      if (member.status === 'rejected') {
+        const rejectedMsg = `⚠️ Hello, *${member.studentName}*.\n\n` +
+          `• *Member ID:* \`${member.memberId}\`\n` +
+          `• *Status:* ❌ *Application Rejected*\n\n` +
+          `Reason: ${member.rejectionReason || 'Application not accepted.'}\n\n` +
+          `If you have questions, please speak with the IT Club faculty at Computer Lab 3.`;
+        const keyboard = [
+          [{ text: '🌐 Visit Club Website', url: `${websiteBaseUrl}/` }]
+        ];
+        const sendResult = await sendTelegramMessage(chatId, rejectedMsg, { inline_keyboard: keyboard });
+        return { handled: true, action: 'DIRECT_MEMBER_ID_REJECTED', responseSent: sendResult.success, chatId };
+      }
+
+      if (member.status === 'suspended') {
+        const suspendedMsg = `⚠️ Hello, *${member.studentName}*.\n\n` +
+          `• *Member ID:* \`${member.memberId}\`\n` +
+          `• *Status:* 🚫 *Account Suspended*\n\n` +
+          `Access to active member features is currently restricted. Please visit Computer Lab 3 during workshop hours.`;
+        const sendResult = await sendTelegramMessage(chatId, suspendedMsg);
+        return { handled: true, action: 'DIRECT_MEMBER_ID_SUSPENDED', responseSent: sendResult.success, chatId };
+      }
+
+      // Member is approved!
+      const channelCheck = await verifyTelegramChannelMembership(numericUserId, channelHandle);
+
+      let session = db.getPendingSessionForMember(member.memberId);
+      if (!session) {
+        session = db.createActivationSession(
+          member.id,
+          member.memberId,
+          member.studentName,
+          member.telegramUsername || (username ? `@${username.replace(/^@/, '')}` : undefined)
+        );
+      }
+      session.telegramUserId = numericUserId;
+      if (username) {
+        session.verifiedTelegramUsername = `@${username.replace(/^@/, '')}`;
+      }
+
+      if (!channelCheck.isMember) {
+        const joinMsg = `👋 Welcome to ARX IT CLUB OF SJS, *${member.studentName}*!\n\n` +
+          `Your membership record (\`${member.memberId}\`) is **Approved** ✅\n\n` +
+          `To activate your account and receive your single-use website code:\n\n` +
+          `1️⃣ Join our official announcement channel: *${channelHandle}*\n` +
+          `2️⃣ Tap *✅ I Joined the Channel* below`;
+        const keyboard = [
+          [{ text: `📢 Join ${channelHandle}`, url: channelUrl }],
+          [{ text: '✅ I Joined the Channel', callback_data: `verify_channel:${session.token}` }]
+        ];
+        const sendResult = await sendTelegramMessage(chatId, joinMsg, { inline_keyboard: keyboard });
+        return { handled: true, action: 'DIRECT_MEMBER_ID_AWAITING_CHANNEL', responseSent: sendResult.success, chatId };
+      }
+
+      // Channel verified! Issue activation code and link account!
+      session.channelVerified = true;
+      const genResult = db.generateActivationCodeForSession(session.token, numericUserId, username);
+
+      // Link member account
+      member.telegramUserId = numericUserId;
+      member.telegramActivated = true;
+      if (username) member.telegramUsername = `@${username.replace(/^@/, '')}`;
+      member.telegramLinkedAt = new Date().toISOString();
+      db._saveToFile();
+
+      if (genResult.success && genResult.code) {
+        const codeMsg = `🎉 *Account Verification Complete!*\n\n` +
+          `Welcome to ARX IT CLUB OF SJS, *${member.studentName}*!\n\n` +
+          `Your website activation code is:\n\n` +
+          `\`${genResult.code}\`\n\n` +
+          `Enter this code on the website to activate your account.\n` +
+          `⏱ *This code expires in 5 minutes and can only be used once.*`;
+        const keyboard = [
+          [{ text: '🔑 Enter Code on Website', url: `${websiteBaseUrl}/#activate?code=${encodeURIComponent(genResult.code)}` }],
+          [{ text: '💻 Member Portal Login', url: `${websiteBaseUrl}/#login` }]
+        ];
+        const sendResult = await sendTelegramMessage(chatId, codeMsg, { inline_keyboard: keyboard });
+        return { handled: true, action: 'DIRECT_MEMBER_ID_CODE_ISSUED', responseSent: sendResult.success, chatId };
+      } else {
+        const activeMsg = `👋 Welcome back, *${member.studentName}*!\n\n` +
+          `Your ARX IT CLUB membership is active and linked to this Telegram account.\n` +
+          `• *Member ID:* \`${member.memberId}\`\n` +
+          `• *Class:* ${member.class}\n` +
+          `• *Role:* ${member.role.toUpperCase()}\n\n` +
+          `You can log in to the Member Portal with your Member ID and password.`;
+        const keyboard = [
+          [{ text: '💻 Member Portal Login', url: `${websiteBaseUrl}/#login` }],
+          [{ text: `📢 Official Channel`, url: channelUrl }]
+        ];
+        const sendResult = await sendTelegramMessage(chatId, activeMsg, { inline_keyboard: keyboard });
+        return { handled: true, action: 'DIRECT_MEMBER_ID_ACTIVE', responseSent: sendResult.success, chatId };
+      }
+    }
+
     // 2. CASE A: /start, /activate, /link COMMANDS
     if (cmd === '/start' || cmd === 'start' || cmd === '/activate' || cmd === '/link') {
       console.log('[TELEGRAM_START_HANDLER_EXECUTED]');
