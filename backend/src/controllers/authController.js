@@ -56,7 +56,7 @@ export function normalizeEthiopianPhone(rawPhone) {
 }
 
 export const authController = {
-  register(req, res) {
+  async register(req, res) {
     try {
       // Admin-controlled registration lifecycle check
       const currentSettings = db.getSettings();
