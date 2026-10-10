@@ -257,11 +257,11 @@ export const AboutPage = ({ navigate }) => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
-            { name: 'Kidus Elisa', role: 'Cyber Security', specialty: 'Cyber Security', img: '/team/kidus.jpg', pos: 'center 15%' },
-            { name: 'Nathan W', role: 'Web Development', specialty: 'Web Development', img: '/team/nathan.jpg', pos: 'center top' },
-            { name: 'Yohannes', role: 'AI & Machine Learning', specialty: 'Artificial Intelligence', img: '/team/yohannes.jpg', pos: 'center 25%' },
-            { name: 'Natan Yonas', role: 'Robotics', specialty: 'Robotics Engineering', img: '/team/me.jpg', pos: 'center 10%' },
-            { name: 'Nathan Haddis', role: 'Member', specialty: 'Technology', img: '/team/nathan-haddis.jpg', pos: 'center 20%' },
+            { name: 'Kidus Elisa', role: 'President', specialty: 'Cyber Security', img: '/team/kidus.jpg', pos: 'center 15%' },
+            { name: 'Nathan Wondwossen', role: 'Media manager', specialty: 'Web Development', img: '/team/nathan.jpg', pos: 'center top' },
+            { name: 'Yohannes Nigatu', role: 'AI & Machine Learning', specialty: 'AI & Machine Learning', img: '/team/yohannes.jpg', pos: 'center 25%' },
+            { name: 'Natan Yonas', role: 'Chiefe technology officer', specialty: 'Robotics', img: '/team/me.jpg', pos: 'center 10%' },
+            { name: 'Nathan Haddis', role: '', specialty: 'AI & Machine Learning', img: '/team/nathan-haddis.jpg', pos: 'center 20%' },
           ].map((member, i) => (
             <div
               key={i}
