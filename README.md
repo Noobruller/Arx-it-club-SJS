@@ -1,8 +1,11 @@
-# IT CLUB — Modern Web Platform & Member Portal
+# ARX IT CLUB OF SJS — Modern Web Platform & Member Portal
 
 > **"Learn. Build. Grow."**
 
-A complete, modern, professional website and student member portal for a school/educational IT Club. Built with React, TypeScript, Tailwind CSS, Node.js, Express, and a clean database abstraction architecture.
+🌐 **Live Website**: [https://arx-website-0-arx-a2b1.vercel.app](https://arx-website-0-arx-a2b1.vercel.app)  
+🚀 **Production URL**: [https://arx-website-d0p6cbn10-arx-a2b1.vercel.app](https://arx-website-d0p6cbn10-arx-a2b1.vercel.app)
+
+A complete, modern, professional website and student member portal for ARX IT CLUB OF SJS. Built with React, TypeScript, Tailwind CSS, Node.js, Express, and cloud database persistence for Vercel serverless deployment.
 
 ---
 
