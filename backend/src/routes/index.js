@@ -15,7 +15,7 @@ import { db } from '../services/db.js';
 
 const apiRouter = Router();
 
-// Ensure DB is initialized and hydrated from MongoDB for serverless & local
+// Ensure DB is initialized and hydrated from arx_database.json
 apiRouter.use(async (_req, _res, next) => {
   try {
     if (typeof db.ensureInitialized === 'function') {

@@ -4,25 +4,7 @@ import path from 'path';
 import { ensureSeedImagesExist } from '../utils/seedImages.js';
 import { CONFIG } from '../config/index.js';
 import { readDb, writeDb } from './fileService.js';
-import {
-  mongoSaveMember,
-  mongoLoadAllMembers,
-  mongoDeleteMember,
-  mongoSaveAwardFile,
-  mongoLoadAllAwardFiles,
-  mongoSaveItem,
-  mongoLoadAll,
-  mongoDeleteItem,
-  mongoSaveSettings,
-  mongoLoadSettings,
-  mongoIsConnected,
-  mongoFindMember
-} from './mongoService.js';
-
-
 class DatabaseStore {
-  isMongoHydrated = false;
-  lastMongoSync = 0;
   isFileHydrated = false;
   lastFileSync = 0;
   initPromise = null;
@@ -159,134 +141,68 @@ class DatabaseStore {
   }
 
   /**
-   * Load persisted data from MongoDB Atlas (with local file fallback).
+   * Load persisted data from arx_database.json.
    * Called once on startup and on each request (via route middleware).
    */
   async ensureInitialized(force = false) {
     const now = Date.now();
-    if ((this.isMongoHydrated || this.isFileHydrated) && !force && (now - Math.max(this.lastMongoSync, this.lastFileSync) < 3000)) {
+    if (this.isFileHydrated && !force && (now - this.lastFileSync < 3000)) {
       return;
     }
     if (this.initPromise) return this.initPromise;
 
     this.initPromise = (async () => {
       try {
-        const isConn = await mongoIsConnected();
-        if (isConn) {
-          // 1. Members
-          const mongoMembers = await mongoLoadAllMembers();
-          if (mongoMembers.length === 0) {
-            for (const m of this.members.values()) {
-              await mongoSaveMember(m);
-            }
-          } else {
-            for (const m of mongoMembers) {
-              const doc = { ...m };
-              delete doc._id;
-              this.members.set(doc.id, doc);
-            }
-          }
-
-          // 2. Award Files
-          const mongoFiles = await mongoLoadAllAwardFiles();
-          for (const f of mongoFiles) {
-            const doc = { ...f };
-            delete doc._id;
-            this.memberAwardFiles.set(doc.id, doc);
-          }
-
-          // 3. Enrollments
-          const mongoEnrollments = await mongoLoadAll('enrollments');
-          if (mongoEnrollments.length === 0) {
-            for (const en of this.enrollments.values()) {
-              await mongoSaveItem('enrollments', en);
-            }
-          } else {
-            for (const en of mongoEnrollments) {
-              const doc = { ...en };
-              delete doc._id;
-              this.enrollments.set(doc.id, doc);
-            }
-          }
-
-          // 4. Activation Sessions
-          const mongoSessions = await mongoLoadAll('activationSessions');
-          for (const s of mongoSessions) {
-            const doc = { ...s };
-            delete doc._id;
-            this.activationSessions.set(doc.token, doc);
-          }
-
-          // 5. Settings
-          const mongoSettings = await mongoLoadSettings();
-          if (!mongoSettings) {
-            await mongoSaveSettings(this.settings);
-          } else {
-            this.settings = { ...this.settings, ...mongoSettings };
-          }
-
-          // 6. Courses
-          const mongoCourses = await mongoLoadAll('courses');
-          if (mongoCourses.length === 0) {
-            for (const c of this.courses.values()) {
-              await mongoSaveItem('courses', c);
-            }
-          } else {
-            for (const c of mongoCourses) {
-              const doc = { ...c };
-              delete doc._id;
-              this.courses.set(doc.id, doc);
-            }
-          }
-
-          this.isMongoHydrated = true;
-          this.lastMongoSync = Date.now();
-          console.log('[DB] Hydrated from MongoDB Atlas:', {
-            members: this.members.size,
-            awardFiles: this.memberAwardFiles.size,
-            enrollments: this.enrollments.size
-          });
-
-          // Keep file backup in sync
+        const data = readDb();
+        if (!data) {
           this._saveToFile();
-        } else {
-          // Fall back to local file
-          const data = readDb();
-          if (data) {
-            if (Array.isArray(data.members)) {
-              for (const m of data.members) {
-                if (m && m.id) this.members.set(m.id, m);
-              }
-            }
-            if (Array.isArray(data.awardFiles)) {
-              for (const f of data.awardFiles) {
-                if (f && f.id) this.memberAwardFiles.set(f.id, f);
-              }
-            }
-            if (Array.isArray(data.enrollments)) {
-              for (const en of data.enrollments) {
-                if (en && en.id) this.enrollments.set(en.id, en);
-              }
-            }
-            if (data.settings && typeof data.settings === 'object') {
-              this.settings = { ...this.settings, ...data.settings };
-            }
-            if (Array.isArray(data.courses) && data.courses.length > 0) {
-              for (const c of data.courses) {
-                if (c && c.id) this.courses.set(c.id, c);
-              }
-            }
-          }
           this.isFileHydrated = true;
           this.lastFileSync = Date.now();
-          console.log('[FileDB] Loaded from file fallback:', {
-            members: this.members.size,
-            awardFiles: this.memberAwardFiles.size,
-            enrollments: this.enrollments.size
-          });
+          return;
         }
+
+        // 1. Members
+        if (Array.isArray(data.members)) {
+          for (const m of data.members) {
+            if (m && m.id) this.members.set(m.id, m);
+          }
+        }
+
+        // 2. Award Files
+        if (Array.isArray(data.awardFiles)) {
+          for (const f of data.awardFiles) {
+            if (f && f.id) this.memberAwardFiles.set(f.id, f);
+          }
+        }
+
+        // 3. Enrollments
+        if (Array.isArray(data.enrollments)) {
+          for (const en of data.enrollments) {
+            if (en && en.id) this.enrollments.set(en.id, en);
+          }
+        }
+
+        // 4. Settings
+        if (data.settings && typeof data.settings === 'object') {
+          this.settings = { ...this.settings, ...data.settings };
+        }
+
+        // 5. Courses
+        if (Array.isArray(data.courses) && data.courses.length > 0) {
+          for (const c of data.courses) {
+            if (c && c.id) this.courses.set(c.id, c);
+          }
+        }
+
+        this.isFileHydrated = true;
+        this.lastFileSync = Date.now();
+        console.log('[FileDB] Loaded from arx_database.json:', {
+          members: this.members.size,
+          awardFiles: this.memberAwardFiles.size,
+          enrollments: this.enrollments.size
+        });
       } catch (err) {
-        console.warn('[DB] Hydration error:', err?.message || err);
+        console.warn('[FileDB] Hydration error:', err?.message || err);
       } finally {
         this.initPromise = null;
       }
@@ -1332,7 +1248,6 @@ class DatabaseStore {
       ...payload,
       updatedAt: new Date().toISOString()
     };
-    mongoSaveSettings(this.settings).catch((err) => console.error('[DB] mongoSaveSettings err:', err));
     this._saveToFile();
     return { ...this.settings };
   }
@@ -1466,7 +1381,6 @@ class DatabaseStore {
     };
 
     this.members.set(newMember.id, newMember);
-    mongoSaveMember(newMember).catch((err) => console.error('[DB] mongoSaveMember err:', err));
     this._saveToFile();
 
     // Initial student activity
@@ -1498,7 +1412,6 @@ class DatabaseStore {
     }
     if (updates.award !== undefined) member.award = updates.award.trim();
     member.updatedAt = new Date().toISOString();
-    mongoSaveMember(member).catch((err) => console.error('[DB] mongoSaveMember err:', err));
     this._saveToFile();
 
     return member;
@@ -1509,7 +1422,6 @@ class DatabaseStore {
     if (!member) return false;
     member.passwordHash = hashPassword(newPassword);
     member.updatedAt = new Date().toISOString();
-    mongoSaveMember(member).catch((err) => console.error('[DB] mongoSaveMember err:', err));
     this._saveToFile();
     return true;
   }
@@ -1525,7 +1437,6 @@ class DatabaseStore {
     if (m.role === 'admin') return m; // Protect primary admin
     m.status = (m.status === 'suspended') ? (m.isApproved ? 'approved' : 'pending') : 'suspended';
     m.updatedAt = new Date().toISOString();
-    mongoSaveMember(m).catch((err) => console.error('[DB] mongoSaveMember err:', err));
     this._saveToFile();
     return m;
   }
@@ -1549,7 +1460,6 @@ class DatabaseStore {
     member.rejectionReason = undefined;
     member.approvedAt = new Date().toISOString();
     member.updatedAt = new Date().toISOString();
-    mongoSaveMember(member).catch((err) => console.error('[DB] mongoSaveMember err:', err));
     this._saveToFile();
 
     const activity = {
@@ -1575,7 +1485,6 @@ class DatabaseStore {
     member.rejectionReason = rejectionReason ? rejectionReason.trim() : 'Application declined by administrator.';
     member.rejectedAt = new Date().toISOString();
     member.updatedAt = new Date().toISOString();
-    mongoSaveMember(member).catch((err) => console.error('[DB] mongoSaveMember err:', err));
     this._saveToFile();
 
     const activity = {
@@ -1595,7 +1504,6 @@ class DatabaseStore {
     const m = this.members.get(id);
     if (!m || m.role === 'admin') return false;
     this.members.delete(id);
-    mongoDeleteMember(id).catch((err) => console.error('[DB] mongoDeleteMember err:', err));
     this._saveToFile();
     // Cleanup enrollments & activities
     for (const [enrId, enr] of this.enrollments.entries()) {
@@ -2029,7 +1937,6 @@ class DatabaseStore {
       enrolledAt: new Date().toISOString()
     };
     this.enrollments.set(newEnrollment.id, newEnrollment);
-    mongoSaveItem('enrollments', newEnrollment).catch((err) => console.error('[DB] mongoSaveItem enrollments err:', err));
     this._saveToFile();
 
     // Activity
@@ -2205,7 +2112,6 @@ class DatabaseStore {
       if (!member.awardFiles) member.awardFiles = [];
       member.awardFiles.push(item);
     }
-    mongoSaveAwardFile(item).catch((err) => console.error('[DB] mongoSaveAwardFile err:', err));
     this._saveToFile();
     return item;
   }
@@ -2581,7 +2487,6 @@ class DatabaseStore {
 
     // Store strictly in activationSessions collection
     this.activationSessions.set(token, session);
-    mongoSaveItem('activationSessions', session, 'token').catch((err) => console.error('[DB] mongoSaveItem activationSessions err:', err));
     this._saveToFile();
     return session;
   }
