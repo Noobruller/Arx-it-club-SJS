@@ -257,10 +257,10 @@ export const AboutPage = ({ navigate }) => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
-            { name: 'Kidus Elisa', role: 'Cyber Security', specialty: 'Cyber Security', img: '/team/kidus.jpg' },
-            { name: 'Nathan W', role: 'Web Development', specialty: 'Web Development', img: '/team/nathan.jpg' },
-            { name: 'Yohannes', role: 'AI & Machine Learning', specialty: 'Artificial Intelligence', img: '/team/yohannes.jpg' },
-            { name: 'Natan Yonas', role: 'Robotics', specialty: 'Robotics Engineering', img: '/team/me.jpg' },
+            { name: 'Kidus Elisa', role: 'Cyber Security', specialty: 'Cyber Security', img: '/team/kidus.jpg', pos: 'center 15%' },
+            { name: 'Nathan W', role: 'Web Development', specialty: 'Web Development', img: '/team/nathan.jpg', pos: 'center top' },
+            { name: 'Yohannes', role: 'AI & Machine Learning', specialty: 'Artificial Intelligence', img: '/team/yohannes.jpg', pos: 'center 25%' },
+            { name: 'Natan Yonas', role: 'Robotics', specialty: 'Robotics Engineering', img: '/team/me.jpg', pos: 'center 10%' },
           ].map((member, i) => (
             <div
               key={i}
@@ -271,7 +271,8 @@ export const AboutPage = ({ navigate }) => {
                 <img
                   src={member.img}
                   alt={member.name}
-                  className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  style={{ objectPosition: member.pos }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
               </div>
