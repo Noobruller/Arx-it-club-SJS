@@ -257,11 +257,11 @@ export const AboutPage = ({ navigate }) => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
-            { name: 'Kidus Elisa', role: 'President', specialty: 'Cyber Security', img: '/team/kidus.jpg', pos: 'center 15%' },
-            { name: 'Nathan Wondwossen', role: 'Media manager', specialty: 'Web Development', img: '/team/nathan.jpg', pos: 'center top' },
-            { name: 'Yohannes Nigatu', role: 'AI & Machine Learning', specialty: 'AI & Machine Learning', img: '/team/yohannes.jpg', pos: 'center 25%' },
-            { name: 'Natan Yonas', role: 'Chiefe technology officer', specialty: 'Robotics', img: '/team/me.jpg', pos: 'center 10%' },
-            { name: 'Nathan Haddis', role: '', specialty: 'AI & Machine Learning', img: '/team/nathan-haddis.jpg', pos: 'center 20%' },
+            { name: 'Kidus Elias', role: 'Cyber Security Instructor', specialty: 'Cyber Security', img: '/team/kidus.jpg', pos: 'center 15%' },
+            { name: 'Nathan Wondwossen', role: 'Front-End Development Instructor', specialty: 'Web Development', img: '/team/nathan.jpg', pos: 'center top' },
+            { name: 'Yohannes Nigatu', role: 'AI & Machine Learning Instructor', specialty: 'Artificial Intelligence', img: '/team/yohannes.jpg', pos: 'center 25%' },
+            { name: 'Natan Yonas', role: 'Robotics Instructor', specialty: 'Robotics Engineering', img: '/team/me.jpg', pos: 'center 10%' },
+            { name: 'Nathan Haddis', role: 'AI & Machine Learning Instructor', specialty: 'Artificial Intelligence', img: '/team/nathan-haddis.jpg', pos: 'center 20%' },
           ].map((member, i) => (
             <div
               key={i}
@@ -288,55 +288,7 @@ export const AboutPage = ({ navigate }) => {
         </div>
       </div>
 
-      {/* Club Governance Section */}
-      <div className="space-y-6">
-        <div className="border-b border-[#282828]/10 dark:border-[#25473C] pb-3">
-          <span className="text-xs font-mono text-[#FC6454] dark:text-[#6BB89E] uppercase tracking-wider font-semibold">
-            LEADERSHIP
-          </span>
-          <h2 className="text-xl sm:text-2xl font-bold text-[#282828] dark:text-[#F1F7F4] tracking-tight mt-1 font-sans">
-            Student Executive Leadership
-          </h2>
-          <p className="text-xs text-[#282828]/60 dark:text-[#B7C9C2] mt-1">
-            Elected officers and mentors supporting operations, curriculum, and community.
-          </p>
-        </div>
 
-        {loadingGovernance ?
-          <div className="py-12 text-center text-xs font-mono text-[#282828]/40 dark:text-[#7F9990]">Loading leadership index...</div> :
-          governance.length === 0 ?
-            <div className="text-center py-8 bg-[#FAF4EE] dark:bg-[#102B22] rounded-lg border border-[#282828]/10 dark:border-[#25473C] text-xs text-[#282828]/50 dark:text-[#7F9990]">
-              Governance team profiles will appear here.
-            </div> :
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {governance.map((leader) =>
-                <div
-                  key={leader.id}
-                  className="p-6 rounded-lg border border-[#282828]/10 dark:border-[#25473C] bg-white dark:bg-[#102B22] text-center space-y-3 flex flex-col justify-between transition-colors">
-
-                  <div className="space-y-3">
-                    {/* Text-only: no profile photo displayed */}
-                    <div className="w-14 h-14 rounded-full bg-[#FAF4EE] dark:bg-[#15362B] border border-[#282828]/15 dark:border-[#25473C] text-[#FC6454] dark:text-[#6BB89E] flex items-center justify-center font-mono font-bold text-lg mx-auto select-none">
-                      {leader.name ? leader.name.charAt(0).toUpperCase() : 'L'}
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-semibold text-[#282828] dark:text-[#F1F7F4]">{leader.name}</h4>
-                      <p className="text-xs text-[#FC6454] dark:text-[#6BB89E] font-medium mt-0.5">{leader.role}</p>
-                      <p className="text-[11px] font-mono text-[#282828]/50 dark:text-[#7F9990]">{leader.classGrade}</p>
-                    </div>
-                  </div>
-
-                  {leader.bio &&
-                    <p className="text-xs text-[#282828]/70 dark:text-[#B7C9C2] leading-relaxed border-t border-[#282828]/10 dark:border-[#25473C] pt-2">
-                      {leader.bio}
-                    </p>
-                  }
-                </div>
-              )}
-            </div>
-        }
-      </div>
 
       {/* CTA Footer for About page */}
       <div className="text-center py-8 space-y-4 border-t border-[#282828]/10 dark:border-[#25473C]">
