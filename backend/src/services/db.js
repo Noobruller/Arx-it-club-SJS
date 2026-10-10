@@ -1106,10 +1106,10 @@ class DatabaseStore {
 
 
   initAdmin() {
-    const adminPasswordHash = hashPassword(process.env.ADMIN_PASSWORD || 'admin123456');
+    const adminPasswordHash = hashPassword(process.env.ADMIN_PASSWORD || 'vMQa$CVgdeUCV49h');
     const admin = {
       id: 'admin_root',
-      memberId: 'ARX-admin',
+      memberId: 'ARX-admin-e4f29a',
       studentName: 'IT Club Administrator',
       class: 'Faculty / Admin',
       passwordHash: adminPasswordHash,
