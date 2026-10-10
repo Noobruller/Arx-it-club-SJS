@@ -21,8 +21,9 @@ import {
   Twitter,
   Globe,
   Share2,
-  ArrowRight } from
-'lucide-react';
+  ArrowRight
+} from
+  'lucide-react';
 
 
 
@@ -40,9 +41,9 @@ export const AboutPage = ({ navigate }) => {
     async function loadData() {
       try {
         const [settingsRes, govRes, socialRes] = await Promise.all([
-        api.getPublicSettings().catch(() => ({ settings: null })),
-        api.getGovernanceRoles().catch(() => ({ governance: [] })),
-        api.getPublicSocialLinks().catch(() => ({ socialLinks: [] }))]
+          api.getPublicSettings().catch(() => ({ settings: null })),
+          api.getGovernanceRoles().catch(() => ({ governance: [] })),
+          api.getPublicSocialLinks().catch(() => ({ socialLinks: [] }))]
         );
 
         if (settingsRes?.settings) {
@@ -81,26 +82,26 @@ export const AboutPage = ({ navigate }) => {
   };
 
   const benefits = [
-  {
-    title: 'Practical Hands-on Projects',
-    desc: 'Build real web portals, games, algorithms, and tools rather than purely theoretical textbook exercises.',
-    icon: Cpu
-  },
-  {
-    title: 'Peer Mentorship & Code Reviews',
-    desc: 'Learn directly from senior student mentors and peers who share an enthusiasm for modern technology.',
-    icon: Users
-  },
-  {
-    title: 'Hackathons & Competitions',
-    desc: 'Represent the school at regional coding challenges, algorithm contests, and international robotics fairs.',
-    icon: Lightbulb
-  },
-  {
-    title: 'Verified Technical Credentials',
-    desc: 'Graduate from curriculum tracks with verifiable certificates featuring cryptographic IDs and QR codes.',
-    icon: Shield
-  }];
+    {
+      title: 'Practical Hands-on Projects',
+      desc: 'Build real web portals, games, algorithms, and tools rather than purely theoretical textbook exercises.',
+      icon: Cpu
+    },
+    {
+      title: 'Peer Mentorship & Code Reviews',
+      desc: 'Learn directly from senior student mentors and peers who share an enthusiasm for modern technology.',
+      icon: Users
+    },
+    {
+      title: 'Hackathons & Competitions',
+      desc: 'Represent the school at regional coding challenges, algorithm contests, and international robotics fairs.',
+      icon: Lightbulb
+    },
+    {
+      title: 'Verified Technical Credentials',
+      desc: 'Graduate from curriculum tracks with verifiable certificates featuring cryptographic IDs and QR codes.',
+      icon: Shield
+    }];
 
 
   return (
@@ -115,7 +116,7 @@ export const AboutPage = ({ navigate }) => {
         </h1>
         <p className="text-sm sm:text-base text-[#282828]/70 dark:text-[#B7C9C2] leading-relaxed">
           {aboutText ||
-          `${clubName} is our school's student technology organization dedicated to software engineering, creative problem solving, and collaborative technical growth.`}
+            `${clubName} is our school's student technology organization dedicated to software engineering, creative problem solving, and collaborative technical growth.`}
         </p>
       </div>
 
@@ -256,10 +257,10 @@ export const AboutPage = ({ navigate }) => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
-            { name: 'Nathat W', role: 'Web Dev Teacher', specialty: 'Web Development', img: '/team/nathat.jpg' },
-            { name: 'Kidus', role: 'Cybersecurity', specialty: 'Security & Systems', img: '/team/kidus.jpg' },
+            { name: 'Kidus Elisa', role: 'Cyber Security', specialty: 'Cyber Security', img: '/team/nathat.jpg' },
+            { name: 'Nathan W', role: 'Web Development', specialty: 'Web Development', img: '/team/nathan.jpg' },
             { name: 'Yohannes', role: 'AI & Machine Learning', specialty: 'Artificial Intelligence', img: '/team/yohannes.jpg' },
-            { name: 'Me', role: 'Robotics', specialty: 'Robotics Engineering', img: '/team/me.jpg' },
+            { name: 'Natan Yonas', role: 'Robotics', specialty: 'Robotics Engineering', img: '/team/me.jpg' },
           ].map((member, i) => (
             <div
               key={i}
@@ -300,38 +301,38 @@ export const AboutPage = ({ navigate }) => {
         </div>
 
         {loadingGovernance ?
-        <div className="py-12 text-center text-xs font-mono text-[#282828]/40 dark:text-[#7F9990]">Loading leadership index...</div> :
-        governance.length === 0 ?
-        <div className="text-center py-8 bg-[#FAF4EE] dark:bg-[#102B22] rounded-lg border border-[#282828]/10 dark:border-[#25473C] text-xs text-[#282828]/50 dark:text-[#7F9990]">
-            Governance team profiles will appear here.
-          </div> :
+          <div className="py-12 text-center text-xs font-mono text-[#282828]/40 dark:text-[#7F9990]">Loading leadership index...</div> :
+          governance.length === 0 ?
+            <div className="text-center py-8 bg-[#FAF4EE] dark:bg-[#102B22] rounded-lg border border-[#282828]/10 dark:border-[#25473C] text-xs text-[#282828]/50 dark:text-[#7F9990]">
+              Governance team profiles will appear here.
+            </div> :
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {governance.map((leader) =>
-          <div
-            key={leader.id}
-            className="p-6 rounded-lg border border-[#282828]/10 dark:border-[#25473C] bg-white dark:bg-[#102B22] text-center space-y-3 flex flex-col justify-between transition-colors">
-            
-                <div className="space-y-3">
-                  {/* Text-only: no profile photo displayed */}
-                  <div className="w-14 h-14 rounded-full bg-[#FAF4EE] dark:bg-[#15362B] border border-[#282828]/15 dark:border-[#25473C] text-[#FC6454] dark:text-[#6BB89E] flex items-center justify-center font-mono font-bold text-lg mx-auto select-none">
-                    {leader.name ? leader.name.charAt(0).toUpperCase() : 'L'}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {governance.map((leader) =>
+                <div
+                  key={leader.id}
+                  className="p-6 rounded-lg border border-[#282828]/10 dark:border-[#25473C] bg-white dark:bg-[#102B22] text-center space-y-3 flex flex-col justify-between transition-colors">
+
+                  <div className="space-y-3">
+                    {/* Text-only: no profile photo displayed */}
+                    <div className="w-14 h-14 rounded-full bg-[#FAF4EE] dark:bg-[#15362B] border border-[#282828]/15 dark:border-[#25473C] text-[#FC6454] dark:text-[#6BB89E] flex items-center justify-center font-mono font-bold text-lg mx-auto select-none">
+                      {leader.name ? leader.name.charAt(0).toUpperCase() : 'L'}
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-semibold text-[#282828] dark:text-[#F1F7F4]">{leader.name}</h4>
+                      <p className="text-xs text-[#FC6454] dark:text-[#6BB89E] font-medium mt-0.5">{leader.role}</p>
+                      <p className="text-[11px] font-mono text-[#282828]/50 dark:text-[#7F9990]">{leader.classGrade}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-sm font-semibold text-[#282828] dark:text-[#F1F7F4]">{leader.name}</h4>
-                    <p className="text-xs text-[#FC6454] dark:text-[#6BB89E] font-medium mt-0.5">{leader.role}</p>
-                    <p className="text-[11px] font-mono text-[#282828]/50 dark:text-[#7F9990]">{leader.classGrade}</p>
-                  </div>
+
+                  {leader.bio &&
+                    <p className="text-xs text-[#282828]/70 dark:text-[#B7C9C2] leading-relaxed border-t border-[#282828]/10 dark:border-[#25473C] pt-2">
+                      {leader.bio}
+                    </p>
+                  }
                 </div>
-
-                {leader.bio &&
-            <p className="text-xs text-[#282828]/70 dark:text-[#B7C9C2] leading-relaxed border-t border-[#282828]/10 dark:border-[#25473C] pt-2">
-                    {leader.bio}
-                  </p>
-            }
-              </div>
-          )}
-          </div>
+              )}
+            </div>
         }
       </div>
 
