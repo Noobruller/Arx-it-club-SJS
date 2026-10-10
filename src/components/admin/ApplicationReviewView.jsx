@@ -695,36 +695,58 @@ export const ApplicationReviewView = ({
             {selectedApp.awardFiles && selectedApp.awardFiles.length > 0 && (
               <div className="p-4 rounded-xl bg-white dark:bg-[#0C241C] border border-[#282828]/10 dark:border-[#25473C] space-y-3">
                 <span className="text-[10px] font-mono uppercase text-[#FC6454] dark:text-[#6BB89E] font-bold tracking-wider">
-                  Supporting Documents ({selectedApp.awardFiles.length})
+                  Supporting Documents & Files ({selectedApp.awardFiles.length})
                 </span>
-                <div className="space-y-2">
-                  {selectedApp.awardFiles.map((file) => (
-                    <div
-                      key={file.id}
-                      className="flex items-center justify-between p-2.5 rounded-lg bg-[#FAF4EE] dark:bg-[#102B22] border border-[#282828]/10 dark:border-[#25473C]"
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <FileText className="w-4 h-4 text-blue-500 shrink-0" />
-                        <div className="min-w-0">
-                          <p className="text-xs font-medium text-[#282828] dark:text-[#F1F7F4] truncate">
-                            {file.originalFilename}
-                          </p>
-                          <span className="text-[10px] font-mono text-[#282828]/50 dark:text-[#7F9990]">
-                            {file.formattedSize || 'Document'}
-                          </span>
+                <div className="space-y-3">
+                  {selectedApp.awardFiles.map((file) => {
+                    const mime = (file.mimeType || '').toLowerCase();
+                    const isImage = mime.startsWith('image/') ||
+                      /\.(jpg|jpeg|png|webp|gif)$/i.test(file.originalFilename || '');
+                    const downloadUrl = `/api/admin/award-files/${file.id}/download`;
+
+                    return (
+                      <div key={file.id} className="rounded-lg border border-[#282828]/10 dark:border-[#25473C] overflow-hidden">
+                        {/* Image Preview */}
+                        {isImage && (
+                          <div className="bg-[#FAF4EE] dark:bg-[#102B22] flex items-center justify-center p-2 max-h-72 overflow-hidden">
+                            <img
+                              src={downloadUrl}
+                              alt={file.originalFilename}
+                              className="max-h-64 max-w-full object-contain rounded"
+                              onError={(e) => { e.target.style.display = 'none'; }}
+                            />
+                          </div>
+                        )}
+                        {/* File Info + Download Row */}
+                        <div className="flex items-center justify-between p-2.5 bg-[#FAF4EE]/60 dark:bg-[#0A211A]/60">
+                          <div className="flex items-center gap-2 min-w-0">
+                            {isImage ? (
+                              <ExternalLink className="w-4 h-4 text-indigo-500 shrink-0" />
+                            ) : (
+                              <FileText className="w-4 h-4 text-blue-500 shrink-0" />
+                            )}
+                            <div className="min-w-0">
+                              <p className="text-xs font-medium text-[#282828] dark:text-[#F1F7F4] truncate">
+                                {file.originalFilename}
+                              </p>
+                              <span className="text-[10px] font-mono text-[#282828]/50 dark:text-[#7F9990]">
+                                {isImage ? 'Image' : 'Document'} · {file.formattedSize || 'File'}
+                              </span>
+                            </div>
+                          </div>
+                          <a
+                            href={downloadUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-white dark:bg-[#15362B] border border-[#282828]/15 dark:border-[#25473C] text-[11px] font-mono font-medium hover:bg-[#FAF4EE] text-[#282828] dark:text-[#F1F7F4] transition-colors shrink-0"
+                          >
+                            <Download className="w-3 h-3 text-[#FC6454] dark:text-[#6BB89E]" />
+                            <span>{isImage ? 'Open' : 'Download'}</span>
+                          </a>
                         </div>
                       </div>
-                      <a
-                        href={`/api/admin/award-files/${file.id}/download`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-white dark:bg-[#15362B] border border-[#282828]/15 dark:border-[#25473C] text-[11px] font-mono font-medium hover:bg-[#FAF4EE] text-[#282828] dark:text-[#F1F7F4] transition-colors"
-                      >
-                        <Download className="w-3 h-3 text-[#FC6454] dark:text-[#6BB89E]" />
-                        <span>Download</span>
-                      </a>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
