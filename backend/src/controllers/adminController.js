@@ -25,7 +25,11 @@ export const adminController = {
       const applications = db.getApplications(filterStatus);
 
       const safeList = applications.map((m) => {
-        const awardFiles = db.getMemberAwardFiles(m.id);
+        const rawFiles = db.getMemberAwardFiles(m.id);
+        const awardFiles = rawFiles.map(f => ({
+          ...f,
+          dataUrl: f.base64 ? `data:${f.mimeType || 'image/jpeg'};base64,${f.base64}` : (f.dataUrl || undefined)
+        }));
         const enrollments = db.getMemberEnrollments(m.id);
         const enrolledCourse = enrollments.length > 0 ? db.getCourseById(enrollments[0].courseId) : null;
 

@@ -15,6 +15,18 @@ import { db } from '../services/db.js';
 
 const apiRouter = Router();
 
+// Ensure DB is initialized and hydrated from MongoDB for serverless & local
+apiRouter.use(async (_req, _res, next) => {
+  try {
+    if (typeof db.ensureInitialized === 'function') {
+      await db.ensureInitialized();
+    }
+  } catch (err) {
+    console.error('[DB] ensureInitialized middleware error:', err);
+  }
+  next();
+});
+
 apiRouter.use('/auth', authRoutes);
 apiRouter.use('/members', memberRoutes);
 apiRouter.use('/courses', courseRoutes);

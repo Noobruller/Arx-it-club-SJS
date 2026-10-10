@@ -702,7 +702,9 @@ export const ApplicationReviewView = ({
                     const mime = (file.mimeType || '').toLowerCase();
                     const isImage = mime.startsWith('image/') ||
                       /\.(jpg|jpeg|png|webp|gif)$/i.test(file.originalFilename || '');
-                    const downloadUrl = `/api/admin/award-files/${file.id}/download`;
+                    const token = (typeof window !== 'undefined' && (localStorage.getItem('itclub_auth_token') || localStorage.getItem('token'))) || '';
+                    const downloadUrl = `/api/admin/award-files/${file.id}/download${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+                    const previewSrc = file.dataUrl || downloadUrl;
 
                     return (
                       <div key={file.id} className="rounded-lg border border-[#282828]/10 dark:border-[#25473C] overflow-hidden">
@@ -710,9 +712,9 @@ export const ApplicationReviewView = ({
                         {isImage && (
                           <div className="bg-[#FAF4EE] dark:bg-[#102B22] flex items-center justify-center p-2 max-h-72 overflow-hidden">
                             <img
-                              src={downloadUrl}
+                              src={previewSrc}
                               alt={file.originalFilename}
-                              className="max-h-64 max-w-full object-contain rounded"
+                              className="max-h-64 max-w-full object-contain rounded shadow-sm"
                               onError={(e) => { e.target.style.display = 'none'; }}
                             />
                           </div>
@@ -735,13 +737,14 @@ export const ApplicationReviewView = ({
                             </div>
                           </div>
                           <a
-                            href={downloadUrl}
+                            href={file.dataUrl || downloadUrl}
                             target="_blank"
                             rel="noopener noreferrer"
+                            download={file.originalFilename}
                             className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-white dark:bg-[#15362B] border border-[#282828]/15 dark:border-[#25473C] text-[11px] font-mono font-medium hover:bg-[#FAF4EE] text-[#282828] dark:text-[#F1F7F4] transition-colors shrink-0"
                           >
                             <Download className="w-3 h-3 text-[#FC6454] dark:text-[#6BB89E]" />
-                            <span>{isImage ? 'Open' : 'Download'}</span>
+                            <span>{isImage ? 'Open / View' : 'Download'}</span>
                           </a>
                         </div>
                       </div>

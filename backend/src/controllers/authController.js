@@ -313,7 +313,8 @@ export const authController = {
           url: f.url,
           fileSize: f.fileSize,
           formattedSize: f.formattedSize,
-          mimeType: f.mimeType
+          mimeType: f.mimeType,
+          base64: f.base64
         });
         savedAwardFiles.push(saved);
       }

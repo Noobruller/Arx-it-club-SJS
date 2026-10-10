@@ -11,12 +11,18 @@ import { db } from '../services/db.js';
  */
 export function authMiddleware(req, res, next) {
   const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  let token = null;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.substring(7).trim();
+  } else if (req.query && req.query.token && typeof req.query.token === 'string') {
+    token = req.query.token.trim();
+  }
+
+  if (!token) {
     res.status(401).json({ error: 'Authentication required. Please log in.' });
     return;
   }
 
-  const token = authHeader.substring(7).trim();
   const payload = verifyToken(token);
 
   if (!payload) {
