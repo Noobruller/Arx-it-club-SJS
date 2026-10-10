@@ -56,41 +56,31 @@ export function readDb() {
   return null;
 }
 
-let _writeTimer = null;
-let _pendingData = null;
-
 /**
  * Write the entire database to disk.
- * Uses debouncing (100ms) to batch rapid successive writes.
+ * Uses atomic file write (write to .tmp then rename) to guarantee integrity.
  */
 export function writeDb(data) {
-  _pendingData = data;
-  if (_writeTimer) return; // already scheduled
-  _writeTimer = setTimeout(() => {
-    _writeTimer = null;
-    const toWrite = _pendingData;
-    _pendingData = null;
-    if (!toWrite) return;
-    const filePath = getDbPath();
-    try {
-      const tmp = filePath + '.tmp';
-      fs.writeFileSync(tmp, JSON.stringify(toWrite, null, 2), 'utf8');
-      fs.renameSync(tmp, filePath);
-    } catch (err) {
-      // If project path failed, fall back to tmp
-      if (filePath !== TMP_DB_PATH) {
-        try {
-          const tmp = TMP_DB_PATH + '.tmp';
-          fs.writeFileSync(tmp, JSON.stringify(toWrite, null, 2), 'utf8');
-          fs.renameSync(tmp, TMP_DB_PATH);
-        } catch (err2) {
-          console.error('[FileDB] Failed to write database:', err2.message);
-        }
-      } else {
-        console.error('[FileDB] Failed to write database:', err.message);
+  if (!data) return;
+  const filePath = getDbPath();
+  try {
+    const tmp = filePath + '.tmp';
+    fs.writeFileSync(tmp, JSON.stringify(data, null, 2), 'utf8');
+    fs.renameSync(tmp, filePath);
+  } catch (err) {
+    // If project path failed (e.g. read-only filesystem), fall back to tmp
+    if (filePath !== TMP_DB_PATH) {
+      try {
+        const tmp = TMP_DB_PATH + '.tmp';
+        fs.writeFileSync(tmp, JSON.stringify(data, null, 2), 'utf8');
+        fs.renameSync(tmp, TMP_DB_PATH);
+      } catch (err2) {
+        console.error('[FileDB] Failed to write database:', err2.message);
       }
+    } else {
+      console.error('[FileDB] Failed to write database:', err.message);
     }
-  }, 100);
+  }
 }
 
 /**
