@@ -257,7 +257,7 @@ export const AboutPage = ({ navigate }) => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
-            { name: 'Kidus Elisa', role: 'Cyber Security', specialty: 'Cyber Security', img: '/team/nathat.jpg' },
+            { name: 'Kidus Elisa', role: 'Cyber Security', specialty: 'Cyber Security', img: '/team/kidus.jpg' },
             { name: 'Nathan W', role: 'Web Development', specialty: 'Web Development', img: '/team/nathan.jpg' },
             { name: 'Yohannes', role: 'AI & Machine Learning', specialty: 'Artificial Intelligence', img: '/team/yohannes.jpg' },
             { name: 'Natan Yonas', role: 'Robotics', specialty: 'Robotics Engineering', img: '/team/me.jpg' },

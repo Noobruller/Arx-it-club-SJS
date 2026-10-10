@@ -13,7 +13,7 @@ router.get('/submissions/:subId/download', authMiddleware, assignmentController.
 
 // Admin routes
 router.get('/admin/all', authMiddleware, adminMiddleware, assignmentController.getAllAdmin);
-router.post('/admin', authMiddleware, adminMiddleware, assignmentController.createAssignment);
+router.post('', authMiddleware, adminMiddleware, assignmentController.createAssignment);
 router.put('/admin/:id', authMiddleware, adminMiddleware, assignmentController.updateAssignment);
 router.delete('/admin/:id', authMiddleware, adminMiddleware, assignmentController.deleteAssignment);
 router.get('/admin/:id/submissions', authMiddleware, adminMiddleware, assignmentController.getAssignmentSubmissions);
