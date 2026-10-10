@@ -260,7 +260,7 @@ export const AboutPage = ({ navigate }) => {
             { name: 'Kidus Elisa', role: 'President', specialty: 'Cyber Security Instructor', img: '/team/kidus.jpg', pos: 'center 15%' },
             { name: 'Nathan Wondwossen', role: 'Chiefe Marketing officer', specialty: 'Web Development Instructor', img: '/team/nathan.jpg', pos: 'center 35%' },
             { name: 'Yohannes Nigatu', role: '', specialty: 'AI & Machine Learning Instructor', img: '/team/yohannes.jpg', pos: 'center 25%' },
-            { name: 'Natan Yonas', role: 'Chiefe technology officer', specialty: 'Robotics Instructor', img: '/team/me.jpg', pos: 'center 10%' },
+            { name: 'Natan Yonas', role: 'Chiefe technology officer', specialty: 'Robotics Instructor', img: '/team/me.jpg', pos: 'center 35%' },
             { name: 'Nathan Haddis', role: '', specialty: 'AI & Machine Learning Instructor', img: '/team/nathan-haddis.jpg', pos: 'center 20%' },
           ].map((member, i) => (
             <div
