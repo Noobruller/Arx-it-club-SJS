@@ -5,8 +5,8 @@
 
 import { MongoClient } from 'mongodb';
 
-const PRIMARY_URI = process.env.MONGODB_URI || 'mongodb+srv://natanyonas413_db_user:l4KA1lYI50QO4Xa8@cluster0.d7hmsjs.mongodb.net/arxitclub?retryWrites=true&w=majority';
 const DIRECT_REPLICA_URI = 'mongodb://natanyonas413_db_user:l4KA1lYI50QO4Xa8@ac-y6j5ymx-shard-00-00.d7hmsjs.mongodb.net:27017,ac-y6j5ymx-shard-00-01.d7hmsjs.mongodb.net:27017,ac-y6j5ymx-shard-00-02.d7hmsjs.mongodb.net:27017/arxitclub?ssl=true&replicaSet=atlas-lukoow-shard-0&authSource=admin&retryWrites=true&w=majority';
+const PRIMARY_URI = process.env.MONGODB_URI || DIRECT_REPLICA_URI;
 const DB_NAME = 'arxitclub';
 
 let client = null;
@@ -18,20 +18,23 @@ export async function getDb() {
   if (connectPromise) return connectPromise;
 
   connectPromise = (async () => {
-    // 1. Try connecting with PRIMARY_URI
+    // 1. Try DIRECT_REPLICA_URI first (fastest & bypasses SRV DNS blocking) if primary is not explicitly set, or PRIMARY_URI first
+    const firstUri = (process.env.MONGODB_URI && process.env.MONGODB_URI !== DIRECT_REPLICA_URI) ? PRIMARY_URI : DIRECT_REPLICA_URI;
+    const secondUri = (firstUri === DIRECT_REPLICA_URI) ? PRIMARY_URI : DIRECT_REPLICA_URI;
+
     try {
-      client = new MongoClient(PRIMARY_URI, { serverSelectionTimeoutMS: 10000, connectTimeoutMS: 10000 });
+      client = new MongoClient(firstUri, { serverSelectionTimeoutMS: 5000, connectTimeoutMS: 5000 });
       await client.connect();
       db = client.db(DB_NAME);
-      console.log('[MongoDB] Connected successfully via primary URI to database:', DB_NAME);
+      console.log('[MongoDB] Connected successfully to database:', DB_NAME);
       return db;
     } catch (err) {
-      console.warn('[MongoDB] Primary connection attempt failed (' + err.message + '). Trying direct replica set fallback...');
+      console.warn('[MongoDB] First connection attempt failed (' + err.message + '). Trying fallback URI...');
       try {
-        client = new MongoClient(DIRECT_REPLICA_URI, { serverSelectionTimeoutMS: 15000, connectTimeoutMS: 15000 });
+        client = new MongoClient(secondUri, { serverSelectionTimeoutMS: 10000, connectTimeoutMS: 10000 });
         await client.connect();
         db = client.db(DB_NAME);
-        console.log('[MongoDB] Connected successfully via direct replica set fallback to database:', DB_NAME);
+        console.log('[MongoDB] Connected successfully via fallback URI to database:', DB_NAME);
         return db;
       } catch (fallbackErr) {
         console.error('[MongoDB] All connection attempts failed:', fallbackErr.message);
@@ -158,4 +161,20 @@ export async function mongoLoadSettings() {
 export async function mongoIsConnected() {
   const mdb = await getDb();
   return mdb !== null;
+}
+
+export async function mongoFindMember(filter) {
+  const mdb = await getDb();
+  if (!mdb || !filter) return null;
+  try {
+    const doc = await mdb.collection('members').findOne(filter);
+    if (doc) {
+      delete doc._id;
+      return doc;
+    }
+    return null;
+  } catch (err) {
+    console.error('[MongoDB] findMember error:', err.message);
+    return null;
+  }
 }
