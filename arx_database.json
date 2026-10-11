@@ -1,5 +1,5 @@
 {
-  "exportedAt": "2026-10-11T08:40:42.791Z",
+  "exportedAt": "2026-10-11T09:58:29.430Z",
   "description": "ARX IT CLUB OF SJS Full Database Export",
   "settings": {
     "clubName": "ARX IT CLUB OF SJS",
@@ -240,6 +240,9 @@
     }
   ],
   "enrollments": [],
+  "awardFiles": [],
+  "activationSessions": [],
+  "telegramUserStates": [],
   "certificates": [],
   "awards": [],
   "projects": [],
@@ -367,12 +370,12 @@
       "description": "Build a modular command-line calculator in Python supporting basic arithmetic, exponentiation, and error handling for division by zero. Include at least 3 unit tests.",
       "courseId": "course_python",
       "courseTitle": "Python Programming Masterclass",
-      "deadline": "2026-10-18T08:40:42.784Z",
+      "deadline": "2026-10-18T09:58:29.420Z",
       "maxScore": 100,
       "instructions": "Submit a single .py file or a .zip archive containing your calculator.py and test_calculator.py files. Follow PEP 8 style standards.",
       "isPublished": true,
-      "createdAt": "2026-10-11T08:40:42.784Z",
-      "updatedAt": "2026-10-11T08:40:42.784Z"
+      "createdAt": "2026-10-11T09:58:29.420Z",
+      "updatedAt": "2026-10-11T09:58:29.420Z"
     },
     {
       "id": "asg_web_01",
@@ -380,12 +383,12 @@
       "description": "Design and code a semantic, accessible single-page portfolio using HTML5 and CSS3 with responsive viewport breakpoints (mobile & desktop).",
       "courseId": "course_web_dev",
       "courseTitle": "Full-Stack Web Engineering",
-      "deadline": "2026-10-21T08:40:42.784Z",
+      "deadline": "2026-10-21T09:58:29.420Z",
       "maxScore": 100,
       "instructions": "Submit your index.html and style.css or a compressed .zip archive. Ensure valid markup without inline style attributes.",
       "isPublished": true,
-      "createdAt": "2026-10-11T08:40:42.784Z",
-      "updatedAt": "2026-10-11T08:40:42.784Z"
+      "createdAt": "2026-10-11T09:58:29.420Z",
+      "updatedAt": "2026-10-11T09:58:29.420Z"
     },
     {
       "id": "asg_cyber_01",
@@ -393,12 +396,12 @@
       "description": "Document the methodology and findings from the Computer Lab 3 ethical port reconnaissance exercise on the isolated test subnet.",
       "courseId": "course_cybersecurity",
       "courseTitle": "Cybersecurity Fundamentals",
-      "deadline": "2026-10-25T08:40:42.784Z",
+      "deadline": "2026-10-25T09:58:29.420Z",
       "maxScore": 100,
       "instructions": "Submit a PDF report detailing open ports, service banners, and defensive hardening recommendations.",
       "isPublished": true,
-      "createdAt": "2026-10-11T08:40:42.784Z",
-      "updatedAt": "2026-10-11T08:40:42.784Z"
+      "createdAt": "2026-10-11T09:58:29.420Z",
+      "updatedAt": "2026-10-11T09:58:29.420Z"
     }
   ],
   "assignmentSubmissions": [],
