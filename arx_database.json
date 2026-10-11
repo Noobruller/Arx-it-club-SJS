@@ -1,5 +1,5 @@
 {
-  "exportedAt": "2026-10-10T18:10:04.884Z",
+  "exportedAt": "2026-10-11T07:19:07.323Z",
   "description": "ARX IT CLUB OF SJS Full Database Export",
   "settings": {
     "clubName": "ARX IT CLUB OF SJS",
@@ -34,7 +34,7 @@
     "aboutHeroImageUrl": "/uploads/computer-lab-3.svg",
     "aboutTeamImageUrl": "/uploads/student-leadership.svg",
     "certificateStampUrl": "/uploads/academic-seal.svg",
-    "updatedAt": "2026-10-10T14:09:04.330Z"
+    "updatedAt": "2026-10-11T07:19:07.306Z"
   },
   "members": [
     {
@@ -42,14 +42,14 @@
       "memberId": "ARX-admin-e4f29a",
       "studentName": "IT Club Administrator",
       "class": "Faculty / Admin",
-      "passwordHash": "d5b6ee7402f97db5dcfb61352110d633:10000:652ed21fb1d0f12a2ea2b698028732c7103a6dbfeeee14c23c08f95da3e571b8fc2caf231dc25ceb169e50f760cbcf6234916255abcb5ff2d879bca6c07c98e9",
+      "passwordHash": "62cb8fdcdf8b8bdad40fd7a6469977ba:10000:5ce914bb4d286bc85cc2df99d9fcfff40f15e0fcd73ad34830438b704029a61c2d05b9aa6fa1795eb515f825cd06e68fbf87c53eca1ccb78194437fba84f40aa",
       "phoneNumber": "N/A",
       "telegramUsername": "@itclub_admin",
       "role": "admin",
       "status": "approved",
       "isApproved": true,
       "createdAt": "2026-10-10T14:09:04.334Z",
-      "updatedAt": "2026-10-10T14:09:04.334Z"
+      "updatedAt": "2026-10-11T07:19:07.323Z"
     }
   ],
   "courses": [
@@ -87,8 +87,8 @@
       "thumbnailMediaId": "med_course_web_dev",
       "bannerMediaId": "med_course_web_dev",
       "isPublished": true,
-      "createdAt": "2026-10-10T14:09:04.334Z",
-      "updatedAt": "2026-10-10T14:09:04.334Z"
+      "createdAt": "2026-10-11T07:19:07.311Z",
+      "updatedAt": "2026-10-11T07:19:07.311Z"
     },
     {
       "id": "crs_python",
@@ -124,8 +124,8 @@
       "thumbnailMediaId": "med_course_python",
       "bannerMediaId": "med_course_python",
       "isPublished": true,
-      "createdAt": "2026-10-10T14:09:04.334Z",
-      "updatedAt": "2026-10-10T14:09:04.334Z"
+      "createdAt": "2026-10-11T07:19:07.311Z",
+      "updatedAt": "2026-10-11T07:19:07.311Z"
     },
     {
       "id": "crs_cybersecurity",
@@ -161,8 +161,8 @@
       "thumbnailMediaId": "med_course_cyber",
       "bannerMediaId": "med_course_cyber",
       "isPublished": true,
-      "createdAt": "2026-10-10T14:09:04.334Z",
-      "updatedAt": "2026-10-10T14:09:04.334Z"
+      "createdAt": "2026-10-11T07:19:07.311Z",
+      "updatedAt": "2026-10-11T07:19:07.311Z"
     },
     {
       "id": "crs_robotics",
@@ -198,8 +198,8 @@
       "thumbnailMediaId": "med_course_robotics",
       "bannerMediaId": "med_course_robotics",
       "isPublished": true,
-      "createdAt": "2026-10-10T14:09:04.334Z",
-      "updatedAt": "2026-10-10T14:09:04.334Z"
+      "createdAt": "2026-10-11T07:19:07.311Z",
+      "updatedAt": "2026-10-11T07:19:07.311Z"
     },
     {
       "id": "crs_ai&machinelearning",
@@ -235,20 +235,12 @@
       "thumbnailMediaId": "med_course_cyber",
       "bannerMediaId": "med_course_cyber",
       "isPublished": true,
-      "createdAt": "2026-10-10T14:09:04.334Z",
-      "updatedAt": "2026-10-10T14:09:04.334Z"
+      "createdAt": "2026-10-11T07:19:07.311Z",
+      "updatedAt": "2026-10-11T07:19:07.311Z"
     }
   ],
   "enrollments": [],
-  "awardFiles": [
-    {
-      "memberId": "mem_1791641352921_981",
-      "originalFilename": "cert.png",
-      "mimeType": "image/png",
-      "base64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
-      "fileSize": 70,
-      "id": "awf_1791641352925_4058",
-      "uploadedAt": "2026-10-10T14:09:12.925Z"
-    }
-  ]
+  "awardFiles": [],
+  "activationSessions": [],
+  "telegramUserStates": []
 }

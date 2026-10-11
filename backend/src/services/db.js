@@ -168,6 +168,17 @@ class DatabaseStore {
           }
         }
 
+        // Ensure admin account password stays in sync with configured ADMIN_PASSWORD
+        const adminMember = this.members.get('admin_root');
+        if (adminMember) {
+          const targetAdminPassword = process.env.ADMIN_PASSWORD || 'vMQa$CVgdeUCV49h';
+          if (!verifyPassword(targetAdminPassword, adminMember.passwordHash)) {
+            adminMember.passwordHash = hashPassword(targetAdminPassword);
+            adminMember.updatedAt = new Date().toISOString();
+            this._saveToFile();
+          }
+        }
+
         // 2. Award Files
         if (Array.isArray(data.awardFiles)) {
           for (const f of data.awardFiles) {
