@@ -8,7 +8,17 @@ export const eventController = {
     let events = db.getEvents();
 
     if (status && typeof status === 'string' && status !== 'All') {
-      events = events.filter((e) => e.status.toLowerCase() === status.toLowerCase());
+      const lowerReq = status.toLowerCase();
+      events = events.filter((e) => {
+        const evStatus = (e.status || '').toLowerCase();
+        if (lowerReq === 'upcoming') {
+          return evStatus === 'upcoming' || evStatus === 'ongoing' || !evStatus;
+        }
+        if (lowerReq === 'past') {
+          return evStatus === 'past' || evStatus === 'completed';
+        }
+        return evStatus === lowerReq;
+      });
     }
 
     res.json({ events });

@@ -531,16 +531,21 @@ export const adminController = {
   createProject(req, res) {
     const { title, description, technologies, projectMembers, status, date, category, imageUrl, mediaId, galleryImages, githubUrl, liveDemoUrl, isPublished } = req.body;
 
-    if (!title || !description) {
-      res.status(400).json({ error: 'Project title and description are required.' });
+    if (!title || typeof title !== 'string' || !title.trim()) {
+      res.status(400).json({ error: 'Project title is required.' });
       return;
     }
 
+    const cleanTitle = title.trim();
+    const cleanDesc = description && typeof description === 'string' && description.trim()
+      ? description.trim()
+      : `${cleanTitle} - Collaborative technology and software initiative developed by ARX IT Club members.`;
+
     const project = db.createProject({
-      title: title.trim(),
-      description: description.trim(),
-      technologies: Array.isArray(technologies) ? technologies : technologies ? String(technologies).split(',').map((t) => t.trim()) : ['Tech'],
-      projectMembers: Array.isArray(projectMembers) ? projectMembers : projectMembers ? String(projectMembers).split(',').map((m) => m.trim()) : ['IT Club Team'],
+      title: cleanTitle,
+      description: cleanDesc,
+      technologies: Array.isArray(technologies) ? technologies : technologies ? String(technologies).split(',').map((t) => t.trim()).filter(Boolean) : ['Tech'],
+      projectMembers: Array.isArray(projectMembers) ? projectMembers : projectMembers ? String(projectMembers).split(',').map((m) => m.trim()).filter(Boolean) : ['IT Club Team'],
       status: status || 'In Progress',
       date: date || new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
       category: category || 'Web App',
@@ -549,7 +554,7 @@ export const adminController = {
       galleryImages: Array.isArray(galleryImages) ? galleryImages : imageUrl ? [imageUrl] : [],
       githubUrl: githubUrl || '',
       liveDemoUrl: liveDemoUrl || '',
-      isPublished: isPublished !== undefined ? isPublished : true
+      isPublished: isPublished !== false
     });
 
     res.status(201).json({ success: true, message: 'Project created successfully.', project });
@@ -584,12 +589,17 @@ export const adminController = {
   createEvent(req, res) {
     const { title, date, time, location, locationType, description, organizer, seatsAvailable, status, imageUrl, coverImageUrl, mediaId, galleryImages, isPublished } = req.body;
 
-    if (!title || !date || !time) {
+    if (!title || typeof title !== 'string' || !title.trim() || !date || !time) {
       res.status(400).json({ error: 'Event title, date, and time are required.' });
       return;
     }
 
-    const dateObj = new Date(date);
+    const cleanTitle = sanitizeText(title.trim());
+    const cleanDesc = description && typeof description === 'string' && description.trim()
+      ? sanitizeText(description.trim())
+      : `${cleanTitle} - Hands-on workshop and technical session at ARX IT Club.`;
+
+    const dateObj = new Date(date + 'T00:00:00');
     const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
     const formattedDate = {
       day: String(dateObj.getDate() || '15'),
@@ -600,13 +610,13 @@ export const adminController = {
     const finalCover = coverImageUrl || imageUrl || '';
 
     const event = db.createEvent({
-      title: sanitizeText(title.trim()),
+      title: cleanTitle,
       date,
       formattedDate,
       time: sanitizeText(time.trim()),
       location: location ? sanitizeText(location) : 'Computer Lab 3',
       locationType: locationType || 'Onsite',
-      description: description ? sanitizeText(description) : 'Workshop and hands-on technical session.',
+      description: cleanDesc,
       organizer: organizer ? sanitizeText(organizer) : 'IT Club Committee',
       seatsAvailable: seatsAvailable !== undefined ? parseInt(seatsAvailable, 10) : 30,
       status: status || 'Upcoming',
@@ -614,7 +624,7 @@ export const adminController = {
       coverImageUrl: finalCover,
       mediaId: mediaId || '',
       galleryImages: Array.isArray(galleryImages) ? galleryImages : finalCover ? [finalCover] : [],
-      isPublished: isPublished !== undefined ? isPublished : true
+      isPublished: isPublished !== false
     });
 
     res.status(201).json({ success: true, message: 'Event created successfully.', event });

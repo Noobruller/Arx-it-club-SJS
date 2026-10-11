@@ -107,20 +107,21 @@ export const MyProjectsPage = ({ navigate }) => {
 
               {/* Technologies */}
               <div className="flex flex-wrap gap-1.5 pt-1">
-                {proj.technologies.map((t) =>
-            <span
-              key={t}
-              className="px-2 py-0.5 rounded-sm text-[11px] font-mono bg-[#EFE6DE] dark:bg-[#15362B] text-[#282828] dark:text-[#F1F7F4] border border-[#282828]/10 dark:border-[#25473C]">
-              
+                {(Array.isArray(proj.technologies) ? proj.technologies : []).map((t) => (
+                  <span
+                    key={t}
+                    className="px-2 py-0.5 rounded-sm text-[11px] font-mono bg-[#EFE6DE] dark:bg-[#15362B] text-[#282828] dark:text-[#F1F7F4] border border-[#282828]/10 dark:border-[#25473C]">
                     {t}
                   </span>
-            )}
+                ))}
               </div>
 
               <div className="pt-3 border-t border-[#282828]/10 dark:border-[#25473C] flex items-center text-xs text-[#282828]/60 dark:text-[#B7C9C2] gap-2">
                 <Users className="w-3.5 h-3.5 text-slate-400" />
                 <span>
-                  Team Members: <strong className="text-slate-800 dark:text-slate-200">{proj.projectMembers.join(', ')}</strong>
+                  Team Members: <strong className="text-slate-800 dark:text-slate-200">
+                    {Array.isArray(proj.projectMembers) ? proj.projectMembers.join(', ') : (proj.projectMembers || 'IT Club Team')}
+                  </strong>
                 </span>
               </div>
             </div>

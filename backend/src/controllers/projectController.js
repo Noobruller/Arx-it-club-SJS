@@ -7,11 +7,11 @@ export const projectController = {
     let projects = db.getProjects();
 
     if (status && typeof status === 'string' && status !== 'All') {
-      projects = projects.filter((p) => p.status.toLowerCase() === status.toLowerCase());
+      projects = projects.filter((p) => (p.status || '').toLowerCase() === status.toLowerCase());
     }
 
     if (category && typeof category === 'string' && category !== 'All') {
-      projects = projects.filter((p) => p.category.toLowerCase() === category.toLowerCase());
+      projects = projects.filter((p) => (p.category || '').toLowerCase() === category.toLowerCase());
     }
 
     res.json({ projects });

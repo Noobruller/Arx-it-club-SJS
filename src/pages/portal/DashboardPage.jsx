@@ -690,7 +690,7 @@ export const DashboardPage = ({ navigate }) => {
                   <div className="min-w-0 flex-1">
                     <h4 className="text-xs font-semibold text-[#282828] dark:text-[#F1F7F4] truncate">{p.title}</h4>
                     <p className="text-[11px] text-[#282828]/50 dark:text-[#7F9990] truncate mt-0.5 font-mono">
-                      {p.category} · {p.projectMembers.join(', ')}
+                      {p.category} · {Array.isArray(p.projectMembers) ? p.projectMembers.join(', ') : (p.projectMembers || 'IT Club Team')}
                     </p>
                   </div>
                   <span className="text-[11px] font-mono px-2 py-0.5 rounded-sm bg-[#EFE6DE] dark:bg-[#15362B] text-[#282828] dark:text-[#B7C9C2] border border-[#282828]/10 dark:border-[#25473C]">
@@ -730,8 +730,12 @@ export const DashboardPage = ({ navigate }) => {
               
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-10 h-10 rounded-md bg-[#FAF4EE] dark:bg-[#0A211A] border border-[#282828]/10 dark:border-[#25473C] flex flex-col items-center justify-center shrink-0">
-                      <span className="text-[9px] font-mono uppercase text-[#FC6454] dark:text-[#6BB89E] font-bold">{ev.formattedDate.month}</span>
-                      <span className="text-xs leading-none font-mono font-bold text-[#282828] dark:text-[#F1F7F4]">{ev.formattedDate.day}</span>
+                      <span className="text-[9px] font-mono uppercase text-[#FC6454] dark:text-[#6BB89E] font-bold">
+                        {ev.formattedDate?.month || (ev.date ? new Date(ev.date + 'T00:00:00').toLocaleString('en-US', { month: 'short' }).toUpperCase() : 'EVT')}
+                      </span>
+                      <span className="text-xs leading-none font-mono font-bold text-[#282828] dark:text-[#F1F7F4]">
+                        {ev.formattedDate?.day || (ev.date ? new Date(ev.date + 'T00:00:00').getDate() : '15')}
+                      </span>
                     </div>
                     <div className="min-w-0">
                       <h4 className="text-xs font-semibold text-[#282828] dark:text-[#F1F7F4] truncate">{ev.title}</h4>

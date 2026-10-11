@@ -2262,22 +2262,36 @@ class DatabaseStore {
   // --- Projects ---
   getProjects(publicOnly = true) {
     const list = Array.from(this.projects.values());
-    if (publicOnly) return list.filter((p) => p.isPublished);
+    if (publicOnly) return list.filter((p) => p.isPublished !== false);
     return list;
   }
 
-  getMemberProjects(studentName) {
-    const lowerName = studentName.toLowerCase();
-    return Array.from(this.projects.values()).filter(
-      (p) => p.isPublished && p.projectMembers.some((m) => m.toLowerCase().includes(lowerName))
-    );
+  getMemberProjects(studentName, memberId) {
+    const lowerName = (studentName || '').toLowerCase().trim();
+    const lowerId = (memberId || '').toLowerCase().trim();
+    return Array.from(this.projects.values()).filter((p) => {
+      if (p.isPublished === false) return false;
+      if (!Array.isArray(p.projectMembers) || p.projectMembers.length === 0) return true;
+      return p.projectMembers.some((m) => {
+        const sm = String(m).toLowerCase().trim();
+        return (lowerName && sm.includes(lowerName)) ||
+          (lowerId && sm.includes(lowerId)) ||
+          sm === 'it club members' ||
+          sm === 'all members' ||
+          sm === 'it club team';
+      });
+    });
   }
 
   createProject(data) {
     const project = {
       ...data,
       id: `prj_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
-      createdAt: new Date().toISOString()
+      technologies: Array.isArray(data.technologies) ? data.technologies : ['Software'],
+      projectMembers: Array.isArray(data.projectMembers) ? data.projectMembers : ['IT Club Team'],
+      isPublished: data.isPublished !== false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
     this.projects.set(project.id, project);
     this._saveToFile();
@@ -2287,7 +2301,10 @@ class DatabaseStore {
   updateProject(id, updates) {
     const proj = this.projects.get(id);
     if (!proj) return null;
-    Object.assign(proj, updates);
+    Object.assign(proj, updates, { updatedAt: new Date().toISOString() });
+    if (updates.isPublished !== undefined) {
+      proj.isPublished = updates.isPublished !== false;
+    }
     this._saveToFile();
     return proj;
   }
@@ -2301,16 +2318,27 @@ class DatabaseStore {
   // --- Events ---
   getEvents(publicOnly = true) {
     const list = Array.from(this.events.values());
-    if (publicOnly) return list.filter((e) => e.isPublished);
+    if (publicOnly) return list.filter((e) => e.isPublished !== false);
     return list;
   }
 
   createEvent(data) {
+    const dateObj = data.date ? new Date(data.date + 'T00:00:00') : new Date();
+    const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+    const formattedDate = data.formattedDate || {
+      day: String(dateObj.getDate() || '15'),
+      month: months[dateObj.getMonth()] || 'OCT',
+      year: String(dateObj.getFullYear() || '2026')
+    };
+
     const event = {
       ...data,
       id: `evt_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
-      registeredMembers: [],
-      createdAt: new Date().toISOString()
+      formattedDate,
+      registeredMembers: Array.isArray(data.registeredMembers) ? data.registeredMembers : [],
+      isPublished: data.isPublished !== false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
     this.events.set(event.id, event);
     this._saveToFile();
@@ -2320,7 +2348,20 @@ class DatabaseStore {
   updateEvent(id, updates) {
     const ev = this.events.get(id);
     if (!ev) return null;
-    Object.assign(ev, updates);
+    let formattedDate = ev.formattedDate;
+    if (updates.date && updates.date !== ev.date) {
+      const dateObj = new Date(updates.date + 'T00:00:00');
+      const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+      formattedDate = {
+        day: String(dateObj.getDate() || '15'),
+        month: months[dateObj.getMonth()] || 'OCT',
+        year: String(dateObj.getFullYear() || '2026')
+      };
+    }
+    Object.assign(ev, updates, { formattedDate, updatedAt: new Date().toISOString() });
+    if (updates.isPublished !== undefined) {
+      ev.isPublished = updates.isPublished !== false;
+    }
     this._saveToFile();
     return ev;
   }

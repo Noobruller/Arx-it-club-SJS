@@ -482,21 +482,35 @@ export const HomePage = ({ navigate }) => {
                   </div>
                 </div>
 
-                <div className="px-6 py-4 border-t border-[#282828]/10 dark:border-[#25473C] bg-[#EFE6DE]/40 dark:bg-[#071A14]/50 space-y-2 text-xs">
-                  <div className="text-[#282828]/60 dark:text-[#F1F7F4]/60 truncate">
-                    Team: <span className="text-[#282828] dark:text-[#F1F7F4] font-medium">{proj.projectMembers.join(', ')}</span>
+                <div className="px-6 py-4 border-t border-[#282828]/10 dark:border-[#25473C] bg-[#EFE6DE]/40 dark:bg-[#071A14]/50 flex items-center justify-between gap-2 text-xs">
+                  <div className="text-[#282828]/60 dark:text-[#F1F7F4]/60 truncate max-w-[170px]">
+                    Team: <span className="text-[#282828] dark:text-[#F1F7F4] font-medium">
+                      {Array.isArray(proj.projectMembers) ? proj.projectMembers.join(', ') : (proj.projectMembers || 'IT Club Team')}
+                    </span>
                   </div>
-                  {proj.projectUrl &&
-                    <a
-                      href={proj.projectUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-xs text-[#FC6454] dark:text-[#6BB89E] hover:underline font-medium">
-
-                      <span>Repository / Demo</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
-                  }
+                  <div className="flex items-center gap-2 shrink-0">
+                    {(proj.githubUrl || proj.projectUrl) && (
+                      <a
+                        href={proj.githubUrl || proj.projectUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-[#282828] dark:text-[#F1F7F4] hover:text-[#FC6454] dark:hover:text-[#6BB89E] font-medium transition-colors"
+                        title="Repository">
+                        <span>Code</span>
+                      </a>
+                    )}
+                    {proj.liveDemoUrl && (
+                      <a
+                        href={proj.liveDemoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-[#FC6454] dark:text-[#6BB89E] hover:underline font-medium transition-colors"
+                        title="Live Demo">
+                        <span>Demo</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    )}
+                  </div>
                 </div>
               </div>
             )}

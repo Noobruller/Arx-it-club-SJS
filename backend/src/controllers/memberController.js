@@ -163,7 +163,7 @@ export const memberController = {
       return;
     }
 
-    const projects = db.getMemberProjects(req.user.studentName);
+    const projects = db.getMemberProjects(req.user.studentName, req.user.memberId);
     res.json({ projects });
   },
 

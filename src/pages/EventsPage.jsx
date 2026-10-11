@@ -177,14 +177,14 @@ export const EventsPage = ({ navigate }) => {
                     <div className="w-full h-24 bg-[#FAF4EE] dark:bg-[#0C241C] border-b border-[#282828]/10 dark:border-[#25473C] p-4 flex items-center gap-3">
                       <div className="w-12 h-12 rounded-md bg-white dark:bg-[#102B22] border border-[#282828]/10 dark:border-[#25473C] flex flex-col items-center justify-center">
                         <span className="text-[10px] font-mono uppercase text-[#FC6454] dark:text-[#6BB89E] font-bold">
-                          {event.formattedDate.month}
+                          {event.formattedDate?.month || (event.date ? new Date(event.date + 'T00:00:00').toLocaleString('en-US', { month: 'short' }).toUpperCase() : 'EVT')}
                         </span>
                         <span className="text-base font-bold text-[#282828] dark:text-[#F1F7F4] font-mono leading-none">
-                          {event.formattedDate.day}
+                          {event.formattedDate?.day || (event.date ? new Date(event.date + 'T00:00:00').getDate() : '15')}
                         </span>
                       </div>
                       <div>
-                        <span className="text-xs font-medium text-[#FC6454] dark:text-[#6BB89E]">{event.category || 'Session'}</span>
+                        <span className="text-xs font-medium text-[#FC6454] dark:text-[#6BB89E]">{event.category || event.locationType || 'Session'}</span>
                         <p className="text-[11px] text-[#282828]/60 dark:text-[#7F9990] font-mono">{event.time}</p>
                       </div>
                     </div>

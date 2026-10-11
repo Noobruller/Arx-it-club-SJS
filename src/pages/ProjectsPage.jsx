@@ -115,33 +115,47 @@ export const ProjectsPage = ({ navigate }) => {
 
                   {/* Technology Tags */}
                   <div className="flex flex-wrap gap-1.5 pt-1">
-                    {project.technologies.map((tech) =>
-                <span
-                  key={tech}
-                  className="px-2 py-0.5 rounded-sm text-[11px] font-mono bg-[#FAF4EE] dark:bg-[#15362B] text-[#282828] dark:text-[#F1F7F4] border border-[#282828]/10 dark:border-[#25473C]">
-                  
+                    {(Array.isArray(project.technologies) ? project.technologies : []).map((tech) => (
+                      <span
+                        key={tech}
+                        className="px-2 py-0.5 rounded-sm text-[11px] font-mono bg-[#FAF4EE] dark:bg-[#15362B] text-[#282828] dark:text-[#F1F7F4] border border-[#282828]/10 dark:border-[#25473C]">
                         {tech}
                       </span>
-                )}
+                    ))}
                   </div>
                 </div>
               </div>
 
-              <div className="px-6 py-4 border-t border-[#282828]/10 dark:border-[#25473C] bg-[#FAF4EE]/50 dark:bg-[#0A211A]/50 flex items-center justify-between text-xs">
-                <div className="text-[#282828]/60 dark:text-[#B7C9C2] truncate max-w-[160px]">
-                  Team: <strong className="text-[#282828] dark:text-[#F1F7F4] font-medium">{project.projectMembers.join(', ')}</strong>
+              <div className="px-6 py-4 border-t border-[#282828]/10 dark:border-[#25473C] bg-[#FAF4EE]/50 dark:bg-[#0A211A]/50 flex items-center justify-between text-xs gap-2">
+                <div className="text-[#282828]/60 dark:text-[#B7C9C2] truncate max-w-[170px]">
+                  Team: <strong className="text-[#282828] dark:text-[#F1F7F4] font-medium">
+                    {Array.isArray(project.projectMembers) ? project.projectMembers.join(', ') : (project.projectMembers || 'IT Club Team')}
+                  </strong>
                 </div>
-                {project.projectUrl &&
-            <a
-              href={project.projectUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-[#FC6454] dark:text-[#6BB89E] hover:underline font-medium">
-              
-                    <span>View Repo</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
-            }
+                <div className="flex items-center gap-2 shrink-0">
+                  {(project.githubUrl || project.projectUrl) && (
+                    <a
+                      href={project.githubUrl || project.projectUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-[#282828] dark:text-[#B7C9C2] hover:text-[#FC6454] dark:hover:text-[#6BB89E] font-medium transition-colors"
+                      title="GitHub Repository">
+                      <Github className="w-3.5 h-3.5" />
+                      <span>Code</span>
+                    </a>
+                  )}
+                  {project.liveDemoUrl && (
+                    <a
+                      href={project.liveDemoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-[#FC6454] dark:text-[#6BB89E] hover:underline font-medium transition-colors"
+                      title="Live Demo">
+                      <span>Live</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  )}
+                </div>
               </div>
             </div>
         )}

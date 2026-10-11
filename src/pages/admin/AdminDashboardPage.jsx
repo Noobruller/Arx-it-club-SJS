@@ -198,6 +198,10 @@ export const AdminDashboardPage = ({ navigate }) => {
   const [editingCommand, setEditingCommand] = useState(null);
   const [isSavingCourse, setIsSavingCourse] = useState(false);
   const [courseError, setCourseError] = useState(null);
+  const [isSavingProject, setIsSavingProject] = useState(false);
+  const [projectError, setProjectError] = useState(null);
+  const [isSavingEvent, setIsSavingEvent] = useState(false);
+  const [eventError, setEventError] = useState(null);
 
   // Forms
   const [courseForm, setCourseForm] = useState({
@@ -227,16 +231,18 @@ export const AdminDashboardPage = ({ navigate }) => {
     projectMembers: ['IT Club Members'],
     status: 'In Progress',
     category: 'Web App',
-    date: '2026',
+    date: new Date().getFullYear().toString(),
     imageUrl: '',
     mediaId: '',
     galleryImages: [],
+    githubUrl: '',
+    liveDemoUrl: '',
     isPublished: true
   });
 
   const [eventForm, setEventForm] = useState({
     title: '',
-    date: '2026-05-15',
+    date: new Date().toISOString().split('T')[0],
     time: '2:00 PM - 4:00 PM',
     location: 'Computer Lab 3, Block B',
     locationType: 'Onsite',
@@ -443,18 +449,62 @@ export const AdminDashboardPage = ({ navigate }) => {
   // Handlers for Projects
   const handleSaveProject = async (e) => {
     e.preventDefault();
+    setProjectError(null);
+
+    const titleTrimmed = (projectForm.title || '').trim();
+    if (!titleTrimmed) {
+      setProjectError('Project title is required.');
+      return;
+    }
+
+    const descTrimmed = (projectForm.description || '').trim() ||
+      `${titleTrimmed} - Collaborative technology and software initiative developed by ARX IT Club members.`;
+
+    const parsedTechs = Array.isArray(projectForm.technologies)
+      ? projectForm.technologies
+      : typeof projectForm.technologies === 'string'
+        ? projectForm.technologies.split(',').map((t) => t.trim()).filter(Boolean)
+        : ['Software'];
+
+    const parsedMembers = Array.isArray(projectForm.projectMembers)
+      ? projectForm.projectMembers
+      : typeof projectForm.projectMembers === 'string'
+        ? projectForm.projectMembers.split(',').map((m) => m.trim()).filter(Boolean)
+        : ['IT Club Members'];
+
+    const payload = {
+      ...projectForm,
+      title: titleTrimmed,
+      description: descTrimmed,
+      technologies: parsedTechs.length > 0 ? parsedTechs : ['Software'],
+      projectMembers: parsedMembers.length > 0 ? parsedMembers : ['IT Club Members'],
+      isPublished: projectForm.isPublished !== false
+    };
+
+    setIsSavingProject(true);
     try {
       if (activeItem?.id) {
-        await api.updateAdminProject(activeItem.id, projectForm);
-        showToast('Project updated!');
+        const res = await api.updateAdminProject(activeItem.id, payload);
+        const updated = res?.project || { ...activeItem, ...payload };
+        setProjectsList((prev) => prev.map((p) => (p.id === activeItem.id ? updated : p)));
+        showToast('Project updated successfully!');
       } else {
-        await api.createAdminProject(projectForm);
-        showToast('Project published!');
+        const res = await api.createAdminProject(payload);
+        const newProj = res?.project || { ...payload, id: `prj_${Date.now()}` };
+        setProjectsList((prev) => [newProj, ...prev.filter((p) => p.id !== newProj.id)]);
+        showToast('Project published successfully!');
       }
       setModalType(null);
-      loadAllAdminData();
+      setProjectError(null);
+      api.getAdminOverview().then((ovRes) => {
+        if (ovRes?.stats) setOverview(ovRes.stats);
+      }).catch(() => {});
     } catch (err) {
-      showToast(err.message, 'error');
+      const msg = err.message || 'Error saving project. Please check required fields.';
+      setProjectError(msg);
+      showToast(msg, 'error');
+    } finally {
+      setIsSavingProject(false);
     }
   };
 
@@ -463,7 +513,10 @@ export const AdminDashboardPage = ({ navigate }) => {
     try {
       await api.deleteAdminProject(id);
       showToast('Project deleted.');
-      loadAllAdminData();
+      setProjectsList((prev) => prev.filter((p) => p.id !== id));
+      api.getAdminOverview().then((ovRes) => {
+        if (ovRes?.stats) setOverview(ovRes.stats);
+      }).catch(() => {});
     } catch (err) {
       showToast(err.message, 'error');
     }
@@ -472,18 +525,71 @@ export const AdminDashboardPage = ({ navigate }) => {
   // Handlers for Events
   const handleSaveEvent = async (e) => {
     e.preventDefault();
+    setEventError(null);
+
+    const titleTrimmed = (eventForm.title || '').trim();
+    if (!titleTrimmed) {
+      setEventError('Event title is required.');
+      return;
+    }
+    if (!eventForm.date) {
+      setEventError('Event date is required.');
+      return;
+    }
+    if (!eventForm.time?.trim()) {
+      setEventError('Event time is required.');
+      return;
+    }
+
+    const descTrimmed = (eventForm.description || '').trim() ||
+      `${titleTrimmed} - Workshop and hands-on technical session hosted by the IT Club.`;
+
+    const dateObj = new Date(eventForm.date + 'T00:00:00');
+    const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+    const formattedDate = {
+      day: String(dateObj.getDate() || '15'),
+      month: months[dateObj.getMonth()] || 'OCT',
+      year: String(dateObj.getFullYear() || '2026')
+    };
+
+    const finalImage = eventForm.imageUrl || eventForm.coverImageUrl || '';
+
+    const payload = {
+      ...eventForm,
+      title: titleTrimmed,
+      description: descTrimmed,
+      location: (eventForm.location || '').trim() || 'Computer Lab 3, Block B',
+      locationType: eventForm.locationType || 'Onsite',
+      formattedDate,
+      imageUrl: finalImage,
+      coverImageUrl: finalImage,
+      isPublished: eventForm.isPublished !== false
+    };
+
+    setIsSavingEvent(true);
     try {
       if (activeItem?.id) {
-        await api.updateAdminEvent(activeItem.id, eventForm);
-        showToast('Event updated!');
+        const res = await api.updateAdminEvent(activeItem.id, payload);
+        const updated = res?.event || { ...activeItem, ...payload };
+        setEventsList((prev) => prev.map((ev) => (ev.id === activeItem.id ? updated : ev)));
+        showToast('Event updated successfully!');
       } else {
-        await api.createAdminEvent(eventForm);
-        showToast('Event created!');
+        const res = await api.createAdminEvent(payload);
+        const newEvt = res?.event || { ...payload, id: `evt_${Date.now()}` };
+        setEventsList((prev) => [newEvt, ...prev.filter((ev) => ev.id !== newEvt.id)]);
+        showToast('Event created successfully!');
       }
       setModalType(null);
-      loadAllAdminData();
+      setEventError(null);
+      api.getAdminOverview().then((ovRes) => {
+        if (ovRes?.stats) setOverview(ovRes.stats);
+      }).catch(() => {});
     } catch (err) {
-      showToast(err.message, 'error');
+      const msg = err.message || 'Error saving event. Please check required fields.';
+      setEventError(msg);
+      showToast(msg, 'error');
+    } finally {
+      setIsSavingEvent(false);
     }
   };
 
@@ -492,7 +598,10 @@ export const AdminDashboardPage = ({ navigate }) => {
     try {
       await api.deleteAdminEvent(id);
       showToast('Event deleted.');
-      loadAllAdminData();
+      setEventsList((prev) => prev.filter((ev) => ev.id !== id));
+      api.getAdminOverview().then((ovRes) => {
+        if (ovRes?.stats) setOverview(ovRes.stats);
+      }).catch(() => {});
     } catch (err) {
       showToast(err.message, 'error');
     }
@@ -1657,6 +1766,7 @@ export const AdminDashboardPage = ({ navigate }) => {
                   size="sm"
                   onClick={() => {
                     setActiveItem(null);
+                    setProjectError(null);
                     setProjectForm({
                       title: '',
                       description: '',
@@ -1664,7 +1774,11 @@ export const AdminDashboardPage = ({ navigate }) => {
                       projectMembers: ['IT Club Members'],
                       status: 'In Progress',
                       category: 'Web App',
-                      date: '2026',
+                      date: new Date().getFullYear().toString(),
+                      imageUrl: '',
+                      mediaId: '',
+                      githubUrl: '',
+                      liveDemoUrl: '',
                       isPublished: true
                     });
                     setModalType('project');
@@ -1688,15 +1802,23 @@ export const AdminDashboardPage = ({ navigate }) => {
                           <img src={p.imageUrl} alt={p.title} className="w-full h-full object-cover" />
                         </div>
                       }
-                      <div className="flex justify-between items-start">
-                        <h4 className="font-bold text-[#282828] dark:text-[#F1F7F4] text-base">{p.title}</h4>
-                        <Badge variant={p.status === 'Completed' ? 'emerald' : 'blue'} size="sm">
-                          {p.status}
-                        </Badge>
+                      <div className="flex justify-between items-start gap-2">
+                        <div>
+                          <h4 className="font-bold text-[#282828] dark:text-[#F1F7F4] text-base">{p.title}</h4>
+                          <span className="text-[10px] font-mono text-[#FC6454] dark:text-[#6BB89E]">{p.category || 'Web App'} &bull; {p.date || '2026'}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <Badge variant={p.status === 'Completed' ? 'emerald' : 'blue'} size="sm">
+                            {p.status}
+                          </Badge>
+                          <Badge variant={p.isPublished !== false ? 'emerald' : 'slate'} size="sm">
+                            {p.isPublished !== false ? 'Published' : 'Draft'}
+                          </Badge>
+                        </div>
                       </div>
                       <p className="text-xs text-[#282828]/70 dark:text-[#B7C9C2] line-clamp-2">{p.description}</p>
                       <div className="flex flex-wrap gap-1 pt-1">
-                        {p.technologies.map((t) =>
+                        {(Array.isArray(p.technologies) ? p.technologies : []).map((t) =>
                           <span key={t} className="text-[10px] px-2 py-0.5 rounded bg-[#FAF4EE] dark:bg-[#0A211A] text-[#282828] dark:text-[#B7C9C2] border border-[#282828]/10 dark:border-[#25473C]">
                             {t}
                           </span>
@@ -1709,7 +1831,13 @@ export const AdminDashboardPage = ({ navigate }) => {
                           className="text-xs py-1"
                           onClick={() => {
                             setActiveItem(p);
-                            setProjectForm(p);
+                            setProjectError(null);
+                            setProjectForm({
+                              ...p,
+                              technologies: Array.isArray(p.technologies) ? p.technologies : [],
+                              projectMembers: Array.isArray(p.projectMembers) ? p.projectMembers : [p.projectMembers || 'IT Club Members'],
+                              isPublished: p.isPublished !== false
+                            });
                             setModalType('project');
                           }}>
 
@@ -1741,9 +1869,10 @@ export const AdminDashboardPage = ({ navigate }) => {
                   size="sm"
                   onClick={() => {
                     setActiveItem(null);
+                    setEventError(null);
                     setEventForm({
                       title: '',
-                      date: '2026-05-15',
+                      date: new Date().toISOString().split('T')[0],
                       time: '2:00 PM - 4:00 PM',
                       location: 'Computer Lab 3, Block B',
                       locationType: 'Onsite',
@@ -1751,6 +1880,8 @@ export const AdminDashboardPage = ({ navigate }) => {
                       organizer: 'IT Club Tech Committee',
                       seatsAvailable: 30,
                       status: 'Upcoming',
+                      imageUrl: '',
+                      coverImageUrl: '',
                       isPublished: true
                     });
                     setModalType('event');
@@ -1780,9 +1911,12 @@ export const AdminDashboardPage = ({ navigate }) => {
                             <span className="font-mono text-[#FC6454] dark:text-[#6BB89E] font-bold text-xs">{ev.date}</span>
                             <span className="text-xs text-[#282828]/60 dark:text-[#B7C9C2]">&bull; {ev.time}</span>
                             <Badge variant={ev.status === 'Upcoming' ? 'emerald' : 'slate'} size="sm">{ev.status}</Badge>
+                            <Badge variant={ev.isPublished !== false ? 'emerald' : 'slate'} size="sm">
+                              {ev.isPublished !== false ? 'Published' : 'Draft'}
+                            </Badge>
                           </div>
                           <h4 className="font-bold text-[#282828] dark:text-[#F1F7F4] text-sm mt-1">{ev.title}</h4>
-                          <p className="text-xs text-[#282828]/70 dark:text-[#B7C9C2]">{ev.location} ({ev.locationType})</p>
+                          <p className="text-xs text-[#282828]/70 dark:text-[#B7C9C2]">{ev.location} ({ev.locationType || 'Onsite'})</p>
                         </div>
                       </div>
                       <div className="flex gap-2 self-end sm:self-center">
@@ -1792,7 +1926,11 @@ export const AdminDashboardPage = ({ navigate }) => {
                           className="text-xs py-1"
                           onClick={() => {
                             setActiveItem(ev);
-                            setEventForm(ev);
+                            setEventError(null);
+                            setEventForm({
+                              ...ev,
+                              isPublished: ev.isPublished !== false
+                            });
                             setModalType('event');
                           }}>
 
@@ -3010,47 +3148,144 @@ export const AdminDashboardPage = ({ navigate }) => {
       {/* MODAL: CREATE PROJECT */}
       <Modal
         isOpen={modalType === 'project'}
-        onClose={() => setModalType(null)}
-        title={activeItem ? 'Edit Project' : 'Create Project'}
-        maxWidth="md">
+        onClose={() => {
+          setModalType(null);
+          setProjectError(null);
+        }}
+        title={activeItem ? 'Edit Project' : 'Create New Project'}
+        maxWidth="lg">
 
         <form onSubmit={handleSaveProject} className="space-y-4 text-xs">
+          {projectError && (
+            <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-300 text-xs flex items-center gap-2">
+              <XCircle className="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400" />
+              <span>{projectError}</span>
+            </div>
+          )}
+
           <div>
-            <label className="block font-bold text-[#282828] dark:text-[#B7C9C2] mb-1">Project Title</label>
+            <label className="block font-bold text-[#282828] dark:text-[#B7C9C2] mb-1">Project Title *</label>
             <input
               type="text"
               required
+              placeholder="e.g. Campus Navigation & AR Assistant"
               value={projectForm.title}
-              onChange={(e) => setProjectForm({ ...projectForm, title: e.target.value })}
+              onChange={(e) => {
+                setProjectForm({ ...projectForm, title: e.target.value });
+                if (projectError) setProjectError(null);
+              }}
               className="w-full px-3 py-2 border border-[#282828]/20 dark:border-[#294B40] bg-white dark:bg-[#0C241C] text-[#282828] dark:text-[#F1F7F4] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FC6454]/40 dark:focus:ring-[#6BB89E]/40" />
-
           </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 bg-[#FAF4EE] dark:bg-[#0A211A] border border-[#282828]/10 dark:border-[#25473C] rounded-lg">
+            <div>
+              <label className="block font-bold text-[#282828] dark:text-[#B7C9C2] mb-1">Category</label>
+              <select
+                value={projectForm.category || 'Web App'}
+                onChange={(e) => setProjectForm({ ...projectForm, category: e.target.value })}
+                className="w-full px-3 py-2 border border-[#282828]/20 dark:border-[#294B40] bg-white dark:bg-[#0C241C] text-[#282828] dark:text-[#F1F7F4] rounded-lg">
+                <option value="Web App">Web App</option>
+                <option value="Mobile App">Mobile App</option>
+                <option value="AI / Machine Learning">AI / Machine Learning</option>
+                <option value="Cybersecurity">Cybersecurity</option>
+                <option value="Cloud / DevOps">Cloud / DevOps</option>
+                <option value="Robotics & IoT">Robotics & IoT</option>
+                <option value="Game Dev">Game Dev</option>
+                <option value="Open Source">Open Source</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label className="block font-bold text-[#282828] dark:text-[#B7C9C2] mb-1">Status</label>
+              <select
+                value={projectForm.status || 'In Progress'}
+                onChange={(e) => setProjectForm({ ...projectForm, status: e.target.value })}
+                className="w-full px-3 py-2 border border-[#282828]/20 dark:border-[#294B40] bg-white dark:bg-[#0C241C] text-[#282828] dark:text-[#F1F7F4] rounded-lg">
+                <option value="In Progress">In Progress</option>
+                <option value="Completed">Completed</option>
+                <option value="Planned">Planned</option>
+                <option value="Maintained">Maintained</option>
+              </select>
+            </div>
+            <div>
+              <label className="block font-bold text-[#282828] dark:text-[#B7C9C2] mb-1">Catalog Visibility</label>
+              <select
+                value={projectForm.isPublished !== false ? 'published' : 'draft'}
+                onChange={(e) => setProjectForm({ ...projectForm, isPublished: e.target.value === 'published' })}
+                className="w-full px-3 py-2 border border-[#282828]/20 dark:border-[#294B40] bg-white dark:bg-[#0C241C] text-[#282828] dark:text-[#F1F7F4] rounded-lg">
+                <option value="published">Published</option>
+                <option value="draft">Draft (Hidden)</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block font-bold text-[#282828] dark:text-[#B7C9C2] mb-1">Release / Academic Year</label>
+              <input
+                type="text"
+                placeholder="e.g. 2026"
+                value={projectForm.date || ''}
+                onChange={(e) => setProjectForm({ ...projectForm, date: e.target.value })}
+                className="w-full px-3 py-2 border border-[#282828]/20 dark:border-[#294B40] bg-white dark:bg-[#0C241C] text-[#282828] dark:text-[#F1F7F4] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FC6454]/40 dark:focus:ring-[#6BB89E]/40" />
+            </div>
+            <div>
+              <label className="block font-bold text-[#282828] dark:text-[#B7C9C2] mb-1">Team Members (comma separated)</label>
+              <input
+                type="text"
+                placeholder="e.g. Nathan Elias, Yohannes N., IT Club Members"
+                value={Array.isArray(projectForm.projectMembers) ? projectForm.projectMembers.join(', ') : (projectForm.projectMembers || '')}
+                onChange={(e) => setProjectForm({ ...projectForm, projectMembers: e.target.value.split(',').map((m) => m.trim()).filter(Boolean) })}
+                className="w-full px-3 py-2 border border-[#282828]/20 dark:border-[#294B40] bg-white dark:bg-[#0C241C] text-[#282828] dark:text-[#F1F7F4] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FC6454]/40 dark:focus:ring-[#6BB89E]/40" />
+            </div>
+          </div>
+
           <div>
-            <label className="block font-bold text-[#282828] dark:text-[#B7C9C2] mb-1">Description</label>
+            <label className="block font-bold text-[#282828] dark:text-[#B7C9C2] mb-1">Technologies & Stack (comma separated)</label>
+            <input
+              type="text"
+              placeholder="e.g. React, Node.js, PostgreSQL, Tailwind"
+              value={Array.isArray(projectForm.technologies) ? projectForm.technologies.join(', ') : (projectForm.technologies || '')}
+              onChange={(e) => setProjectForm({ ...projectForm, technologies: e.target.value.split(',').map((t) => t.trim()).filter(Boolean) })}
+              className="w-full px-3 py-2 border border-[#282828]/20 dark:border-[#294B40] bg-white dark:bg-[#0C241C] text-[#282828] dark:text-[#F1F7F4] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FC6454]/40 dark:focus:ring-[#6BB89E]/40" />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block font-bold text-[#282828] dark:text-[#B7C9C2] mb-1">GitHub / Source Repository URL</label>
+              <input
+                type="url"
+                placeholder="https://github.com/arxitclub/project"
+                value={projectForm.githubUrl || projectForm.projectUrl || ''}
+                onChange={(e) => setProjectForm({ ...projectForm, githubUrl: e.target.value, projectUrl: e.target.value })}
+                className="w-full px-3 py-2 border border-[#282828]/20 dark:border-[#294B40] bg-white dark:bg-[#0C241C] text-[#282828] dark:text-[#F1F7F4] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FC6454]/40 dark:focus:ring-[#6BB89E]/40" />
+            </div>
+            <div>
+              <label className="block font-bold text-[#282828] dark:text-[#B7C9C2] mb-1">Live Demo / Deployment URL</label>
+              <input
+                type="url"
+                placeholder="https://demo.arxitclub.org"
+                value={projectForm.liveDemoUrl || ''}
+                onChange={(e) => setProjectForm({ ...projectForm, liveDemoUrl: e.target.value })}
+                className="w-full px-3 py-2 border border-[#282828]/20 dark:border-[#294B40] bg-white dark:bg-[#0C241C] text-[#282828] dark:text-[#F1F7F4] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FC6454]/40 dark:focus:ring-[#6BB89E]/40" />
+            </div>
+          </div>
+
+          <div>
+            <label className="block font-bold text-[#282828] dark:text-[#B7C9C2] mb-1">Project Description</label>
             <textarea
               rows={3}
-              required
-              value={projectForm.description}
+              placeholder="Brief overview of problem solved, core features and tech stack (optional, auto-generated if left blank)"
+              value={projectForm.description || ''}
               onChange={(e) => setProjectForm({ ...projectForm, description: e.target.value })}
               className="w-full px-3 py-2 border border-[#282828]/20 dark:border-[#294B40] bg-white dark:bg-[#0C241C] text-[#282828] dark:text-[#F1F7F4] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FC6454]/40 dark:focus:ring-[#6BB89E]/40" />
-
-          </div>
-          <div>
-            <label className="block font-bold text-[#282828] dark:text-[#B7C9C2] mb-1">Technologies (comma separated)</label>
-            <input
-              type="text"
-              placeholder="React, TypeScript, Tailwind"
-              value={Array.isArray(projectForm.technologies) ? projectForm.technologies.join(', ') : ''}
-              onChange={(e) => setProjectForm({ ...projectForm, technologies: e.target.value.split(',').map((t) => t.trim()) })}
-              className="w-full px-3 py-2 border border-[#282828]/20 dark:border-[#294B40] bg-white dark:bg-[#0C241C] text-[#282828] dark:text-[#F1F7F4] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FC6454]/40 dark:focus:ring-[#6BB89E]/40" />
-
           </div>
 
           {/* Project Image */}
           <div className="pt-2 border-t border-[#282828]/10 dark:border-[#25473C]">
             <ImageFieldInput
               label="Project Showcase Image"
-              description="Primary image displayed in public showcase and project portfolios."
+              description="Primary visual artwork or screenshot displayed in public showcase cards and student portfolio."
               value={projectForm.imageUrl}
               mediaId={projectForm.mediaId}
               category="Projects"
@@ -3063,12 +3298,13 @@ export const AdminDashboardPage = ({ navigate }) => {
                   galleryImages: url ? [url] : []
                 })
               } />
-
           </div>
 
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="ghost" size="sm" onClick={() => setModalType(null)}>Cancel</Button>
-            <Button type="submit" variant="primary" size="sm">Save Project</Button>
+          <div className="sticky bottom-0 bg-white dark:bg-[#102B22] pt-3 pb-1 -mx-6 px-6 -mb-6 border-t border-[#282828]/10 dark:border-[#25473C] flex justify-end gap-2 z-10 shadow-xs">
+            <Button type="button" variant="ghost" size="sm" onClick={() => { setModalType(null); setProjectError(null); }}>Cancel</Button>
+            <Button type="submit" variant="primary" size="sm" loading={isSavingProject}>
+              {activeItem ? 'Save Changes' : 'Create Project'}
+            </Button>
           </div>
         </form>
       </Modal>
@@ -3076,69 +3312,147 @@ export const AdminDashboardPage = ({ navigate }) => {
       {/* MODAL: CREATE EVENT */}
       <Modal
         isOpen={modalType === 'event'}
-        onClose={() => setModalType(null)}
-        title={activeItem ? 'Edit Event' : 'Create Event'}
-        maxWidth="md">
+        onClose={() => {
+          setModalType(null);
+          setEventError(null);
+        }}
+        title={activeItem ? 'Edit Event' : 'Create New Event'}
+        maxWidth="lg">
 
         <form onSubmit={handleSaveEvent} className="space-y-4 text-xs">
+          {eventError && (
+            <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-300 text-xs flex items-center gap-2">
+              <XCircle className="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400" />
+              <span>{eventError}</span>
+            </div>
+          )}
+
           <div>
-            <label className="block font-bold text-[#282828] dark:text-[#B7C9C2] mb-1">Event Title</label>
+            <label className="block font-bold text-[#282828] dark:text-[#B7C9C2] mb-1">Event Title *</label>
             <input
               type="text"
               required
+              placeholder="e.g. Next-Gen Web Technologies Workshop"
               value={eventForm.title}
-              onChange={(e) => setEventForm({ ...eventForm, title: e.target.value })}
+              onChange={(e) => {
+                setEventForm({ ...eventForm, title: e.target.value });
+                if (eventError) setEventError(null);
+              }}
               className="w-full px-3 py-2 border border-[#282828]/20 dark:border-[#294B40] bg-white dark:bg-[#0C241C] text-[#282828] dark:text-[#F1F7F4] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FC6454]/40 dark:focus:ring-[#6BB89E]/40" />
-
           </div>
-          <div className="grid grid-cols-2 gap-3">
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block font-bold text-[#282828] dark:text-[#B7C9C2] mb-1">Date</label>
+              <label className="block font-bold text-[#282828] dark:text-[#B7C9C2] mb-1">Date *</label>
               <input
                 type="date"
                 required
                 value={eventForm.date}
-                onChange={(e) => setEventForm({ ...eventForm, date: e.target.value })}
+                onChange={(e) => {
+                  setEventForm({ ...eventForm, date: e.target.value });
+                  if (eventError) setEventError(null);
+                }}
                 className="w-full px-3 py-2 border border-[#282828]/20 dark:border-[#294B40] bg-white dark:bg-[#0C241C] text-[#282828] dark:text-[#F1F7F4] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FC6454]/40 dark:focus:ring-[#6BB89E]/40" />
-
             </div>
             <div>
-              <label className="block font-bold text-[#282828] dark:text-[#B7C9C2] mb-1">Time</label>
+              <label className="block font-bold text-[#282828] dark:text-[#B7C9C2] mb-1">Time *</label>
               <input
                 type="text"
                 required
                 placeholder="2:00 PM - 4:00 PM"
                 value={eventForm.time}
-                onChange={(e) => setEventForm({ ...eventForm, time: e.target.value })}
+                onChange={(e) => {
+                  setEventForm({ ...eventForm, time: e.target.value });
+                  if (eventError) setEventError(null);
+                }}
                 className="w-full px-3 py-2 border border-[#282828]/20 dark:border-[#294B40] bg-white dark:bg-[#0C241C] text-[#282828] dark:text-[#F1F7F4] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FC6454]/40 dark:focus:ring-[#6BB89E]/40" />
-
             </div>
           </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block font-bold text-[#282828] dark:text-[#B7C9C2] mb-1">Location</label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. Computer Lab 3, Block B"
+                value={eventForm.location}
+                onChange={(e) => setEventForm({ ...eventForm, location: e.target.value })}
+                className="w-full px-3 py-2 border border-[#282828]/20 dark:border-[#294B40] bg-white dark:bg-[#0C241C] text-[#282828] dark:text-[#F1F7F4] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FC6454]/40 dark:focus:ring-[#6BB89E]/40" />
+            </div>
+            <div>
+              <label className="block font-bold text-[#282828] dark:text-[#B7C9C2] mb-1">Format / Venue Type</label>
+              <select
+                value={eventForm.locationType || 'Onsite'}
+                onChange={(e) => setEventForm({ ...eventForm, locationType: e.target.value })}
+                className="w-full px-3 py-2 border border-[#282828]/20 dark:border-[#294B40] bg-white dark:bg-[#0C241C] text-[#282828] dark:text-[#F1F7F4] rounded-lg">
+                <option value="Onsite">Onsite (Computer Lab 3)</option>
+                <option value="Online">Online / Live Stream</option>
+                <option value="Hybrid">Hybrid (Lab + Online)</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 bg-[#FAF4EE] dark:bg-[#0A211A] border border-[#282828]/10 dark:border-[#25473C] rounded-lg">
+            <div>
+              <label className="block font-bold text-[#282828] dark:text-[#B7C9C2] mb-1">Status</label>
+              <select
+                value={eventForm.status || 'Upcoming'}
+                onChange={(e) => setEventForm({ ...eventForm, status: e.target.value })}
+                className="w-full px-3 py-2 border border-[#282828]/20 dark:border-[#294B40] bg-white dark:bg-[#0C241C] text-[#282828] dark:text-[#F1F7F4] rounded-lg">
+                <option value="Upcoming">Upcoming</option>
+                <option value="Ongoing">Ongoing</option>
+                <option value="Completed">Completed</option>
+                <option value="Postponed">Postponed</option>
+              </select>
+            </div>
+            <div>
+              <label className="block font-bold text-[#282828] dark:text-[#B7C9C2] mb-1">Calendar Visibility</label>
+              <select
+                value={eventForm.isPublished !== false ? 'published' : 'draft'}
+                onChange={(e) => setEventForm({ ...eventForm, isPublished: e.target.value === 'published' })}
+                className="w-full px-3 py-2 border border-[#282828]/20 dark:border-[#294B40] bg-white dark:bg-[#0C241C] text-[#282828] dark:text-[#F1F7F4] rounded-lg">
+                <option value="published">Published</option>
+                <option value="draft">Draft (Hidden)</option>
+              </select>
+            </div>
+            <div>
+              <label className="block font-bold text-[#282828] dark:text-[#B7C9C2] mb-1">Seats Available</label>
+              <input
+                type="number"
+                min={1}
+                max={500}
+                value={eventForm.seatsAvailable ?? 30}
+                onChange={(e) => setEventForm({ ...eventForm, seatsAvailable: Number(e.target.value) || 30 })}
+                className="w-full px-3 py-2 border border-[#282828]/20 dark:border-[#294B40] bg-white dark:bg-[#0C241C] text-[#282828] dark:text-[#F1F7F4] rounded-lg" />
+            </div>
+          </div>
+
           <div>
-            <label className="block font-bold text-[#282828] dark:text-[#B7C9C2] mb-1">Location</label>
+            <label className="block font-bold text-[#282828] dark:text-[#B7C9C2] mb-1">Organizer / Presenter</label>
             <input
               type="text"
-              required
-              value={eventForm.location}
-              onChange={(e) => setEventForm({ ...eventForm, location: e.target.value })}
+              placeholder="e.g. IT Club Tech Committee"
+              value={eventForm.organizer || ''}
+              onChange={(e) => setEventForm({ ...eventForm, organizer: e.target.value })}
               className="w-full px-3 py-2 border border-[#282828]/20 dark:border-[#294B40] bg-white dark:bg-[#0C241C] text-[#282828] dark:text-[#F1F7F4] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FC6454]/40 dark:focus:ring-[#6BB89E]/40" />
-
           </div>
+
           <div>
-            <label className="block font-bold text-[#282828] dark:text-[#B7C9C2] mb-1">Description</label>
+            <label className="block font-bold text-[#282828] dark:text-[#B7C9C2] mb-1">Event Description</label>
             <textarea
-              rows={2}
-              value={eventForm.description}
+              rows={3}
+              placeholder="Session agenda, key takeaways and equipment requirements (optional, auto-generated if left blank)"
+              value={eventForm.description || ''}
               onChange={(e) => setEventForm({ ...eventForm, description: e.target.value })}
               className="w-full px-3 py-2 border border-[#282828]/20 dark:border-[#294B40] bg-white dark:bg-[#0C241C] text-[#282828] dark:text-[#F1F7F4] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FC6454]/40 dark:focus:ring-[#6BB89E]/40" />
-
           </div>
 
           {/* Event Cover Image */}
           <div className="pt-2 border-t border-[#282828]/10 dark:border-[#25473C]">
             <ImageFieldInput
               label="Event Cover Image"
-              description="Banner displayed in upcoming activities, workshops, and event cards."
+              description="Visual banner artwork displayed in upcoming activities, workshops, and event cards."
               value={eventForm.imageUrl || eventForm.coverImageUrl}
               mediaId={eventForm.mediaId}
               category="Events"
@@ -3152,12 +3466,13 @@ export const AdminDashboardPage = ({ navigate }) => {
                   galleryImages: url ? [url] : []
                 })
               } />
-
           </div>
 
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="ghost" size="sm" onClick={() => setModalType(null)}>Cancel</Button>
-            <Button type="submit" variant="primary" size="sm">Save Event</Button>
+          <div className="sticky bottom-0 bg-white dark:bg-[#102B22] pt-3 pb-1 -mx-6 px-6 -mb-6 border-t border-[#282828]/10 dark:border-[#25473C] flex justify-end gap-2 z-10 shadow-xs">
+            <Button type="button" variant="ghost" size="sm" onClick={() => { setModalType(null); setEventError(null); }}>Cancel</Button>
+            <Button type="submit" variant="primary" size="sm" loading={isSavingEvent}>
+              {activeItem ? 'Save Changes' : 'Create Event'}
+            </Button>
           </div>
         </form>
       </Modal>
