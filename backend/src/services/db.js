@@ -200,6 +200,7 @@ class DatabaseStore {
 
         // 5. Courses
         if (Array.isArray(data.courses) && data.courses.length > 0) {
+          this.courses.clear();
           for (const c of data.courses) {
             if (c && c.id) this.courses.set(c.id, c);
           }
@@ -216,6 +217,78 @@ class DatabaseStore {
         if (Array.isArray(data.telegramUserStates)) {
           for (const item of data.telegramUserStates) {
             if (item && item.userId && item.state) this.telegramUserStates.set(item.userId, item.state);
+          }
+        }
+
+        // 8. Certificates
+        if (Array.isArray(data.certificates)) {
+          this.certificates.clear();
+          for (const cert of data.certificates) {
+            if (cert && cert.id) this.certificates.set(cert.id, cert);
+          }
+        }
+
+        // 9. Awards
+        if (Array.isArray(data.awards)) {
+          this.awards.clear();
+          for (const a of data.awards) {
+            if (a && a.id) this.awards.set(a.id, a);
+          }
+        }
+
+        // 10. Projects
+        if (Array.isArray(data.projects)) {
+          this.projects.clear();
+          for (const p of data.projects) {
+            if (p && p.id) this.projects.set(p.id, p);
+          }
+        }
+
+        // 11. Events
+        if (Array.isArray(data.events)) {
+          this.events.clear();
+          for (const e of data.events) {
+            if (e && e.id) this.events.set(e.id, e);
+          }
+        }
+
+        // 12. Achievements
+        if (Array.isArray(data.achievements)) {
+          this.achievements.clear();
+          for (const ach of data.achievements) {
+            if (ach && ach.id) this.achievements.set(ach.id, ach);
+          }
+        }
+
+        // 13. Announcements
+        if (Array.isArray(data.announcements)) {
+          this.announcements.clear();
+          for (const ann of data.announcements) {
+            if (ann && ann.id) this.announcements.set(ann.id, ann);
+          }
+        }
+
+        // 14. Governance
+        if (Array.isArray(data.governance) && data.governance.length > 0) {
+          this.governance.clear();
+          for (const g of data.governance) {
+            if (g && g.id) this.governance.set(g.id, g);
+          }
+        }
+
+        // 15. Social Links
+        if (Array.isArray(data.socialLinks) && data.socialLinks.length > 0) {
+          this.socialLinks.clear();
+          for (const s of data.socialLinks) {
+            if (s && s.id) this.socialLinks.set(s.id, s);
+          }
+        }
+
+        // 16. Bot Commands
+        if (Array.isArray(data.botCommands) && data.botCommands.length > 0) {
+          this.botCommands.clear();
+          for (const b of data.botCommands) {
+            if (b && b.command) this.botCommands.set(b.command.toLowerCase(), b);
           }
         }
 
@@ -252,7 +325,17 @@ class DatabaseStore {
         enrollments: Array.from(this.enrollments.values()),
         awardFiles: Array.from(this.memberAwardFiles.values()),
         activationSessions: Array.from(this.activationSessions.values()),
-        telegramUserStates: Array.from(this.telegramUserStates.entries()).map(([k, v]) => ({ userId: k, state: v }))
+        telegramUserStates: Array.from(this.telegramUserStates.entries()).map(([k, v]) => ({ userId: k, state: v })),
+        certificates: Array.from(this.certificates?.values() || []),
+        awards: Array.from(this.awards?.values() || []),
+        projects: Array.from(this.projects?.values() || []),
+        events: Array.from(this.events?.values() || []),
+        achievements: Array.from(this.achievements?.values() || []),
+        announcements: Array.from(this.announcements?.values() || []),
+        media: Array.from(this.media?.values() || []),
+        socialLinks: Array.from(this.socialLinks?.values() || []),
+        governance: Array.from(this.governance?.values() || []),
+        botCommands: Array.from(this.botCommands?.values() || [])
       };
       writeDb(snapshot);
     } catch (err) {
@@ -1587,6 +1670,7 @@ class DatabaseStore {
       updatedAt: now
     };
     this.courses.set(course.id, course);
+    this._saveToFile();
     return course;
   }
 
@@ -1594,11 +1678,16 @@ class DatabaseStore {
     const course = this.courses.get(id);
     if (!course) return null;
     Object.assign(course, updates, { updatedAt: new Date().toISOString() });
+    this._saveToFile();
     return course;
   }
 
   deleteCourse(id) {
-    return this.courses.delete(id);
+    const deleted = this.courses.delete(id);
+    if (deleted) {
+      this._saveToFile();
+    }
+    return deleted;
   }
 
   getMemberEnrollments(memberId) {
@@ -2191,6 +2280,7 @@ class DatabaseStore {
       createdAt: new Date().toISOString()
     };
     this.projects.set(project.id, project);
+    this._saveToFile();
     return project;
   }
 
@@ -2198,11 +2288,14 @@ class DatabaseStore {
     const proj = this.projects.get(id);
     if (!proj) return null;
     Object.assign(proj, updates);
+    this._saveToFile();
     return proj;
   }
 
   deleteProject(id) {
-    return this.projects.delete(id);
+    const deleted = this.projects.delete(id);
+    if (deleted) this._saveToFile();
+    return deleted;
   }
 
   // --- Events ---
@@ -2220,6 +2313,7 @@ class DatabaseStore {
       createdAt: new Date().toISOString()
     };
     this.events.set(event.id, event);
+    this._saveToFile();
     return event;
   }
 
@@ -2227,11 +2321,14 @@ class DatabaseStore {
     const ev = this.events.get(id);
     if (!ev) return null;
     Object.assign(ev, updates);
+    this._saveToFile();
     return ev;
   }
 
   deleteEvent(id) {
-    return this.events.delete(id);
+    const deleted = this.events.delete(id);
+    if (deleted) this._saveToFile();
+    return deleted;
   }
 
   registerForEvent(eventId, memberId) {
@@ -2256,6 +2353,7 @@ class DatabaseStore {
       type: 'workshop'
     };
     this.activities.set(activity.id, activity);
+    this._saveToFile();
 
     return { success: true, message: 'Successfully registered for event!' };
   }
@@ -2274,6 +2372,7 @@ class DatabaseStore {
       createdAt: new Date().toISOString()
     };
     this.achievements.set(ach.id, ach);
+    this._saveToFile();
     return ach;
   }
 
@@ -2281,11 +2380,14 @@ class DatabaseStore {
     const ach = this.achievements.get(id);
     if (!ach) return null;
     Object.assign(ach, updates);
+    this._saveToFile();
     return ach;
   }
 
   deleteAchievement(id) {
-    return this.achievements.delete(id);
+    const deleted = this.achievements.delete(id);
+    if (deleted) this._saveToFile();
+    return deleted;
   }
 
   // --- Announcements ---
@@ -2302,11 +2404,14 @@ class DatabaseStore {
       createdAt: new Date().toISOString()
     };
     this.announcements.set(ann.id, ann);
+    this._saveToFile();
     return ann;
   }
 
   deleteAnnouncement(id) {
-    return this.announcements.delete(id);
+    const deleted = this.announcements.delete(id);
+    if (deleted) this._saveToFile();
+    return deleted;
   }
 
   // --- Activities ---

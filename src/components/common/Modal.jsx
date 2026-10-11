@@ -52,7 +52,7 @@ export const Modal = ({
           onClick={onClose} />
         
         <div
-          className={`relative transform overflow-hidden rounded-xl bg-[var(--surface)] dark:bg-[#102B22] text-left transition-all sm:my-8 w-full ${maxWidthClasses[maxWidth]} border border-[#282828]/15 dark:border-[#25473C] shadow-xl`}>
+          className={`relative transform overflow-hidden rounded-xl bg-white dark:bg-[#102B22] text-left transition-all sm:my-8 w-full ${maxWidthClasses[maxWidth]} border border-[#282828]/15 dark:border-[#25473C] shadow-xl`}>
           
           {title &&
           <div className="flex items-center justify-between border-b border-[#282828]/10 dark:border-[#25473C] px-6 py-4 bg-[#FAF4EE] dark:bg-[#0A211A]">
