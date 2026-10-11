@@ -52,13 +52,14 @@ export const Modal = ({
           onClick={onClose} />
         
         <div
-          className={`relative transform overflow-hidden rounded-xl bg-white dark:bg-[#102B22] text-left transition-all sm:my-8 w-full ${maxWidthClasses[maxWidth]} border border-[#282828]/15 dark:border-[#25473C] shadow-xl`}>
+          className={`relative transform overflow-hidden rounded-xl bg-white dark:bg-[#102B22] text-left transition-all sm:my-8 w-full ${maxWidthClasses[maxWidth]} border border-[#282828]/15 dark:border-[#25473C] shadow-xl max-h-[90vh] flex flex-col`}>
           
           {title &&
-          <div className="flex items-center justify-between border-b border-[#282828]/10 dark:border-[#25473C] px-6 py-4 bg-[#FAF4EE] dark:bg-[#0A211A]">
+          <div className="flex items-center justify-between border-b border-[#282828]/10 dark:border-[#25473C] px-6 py-4 bg-[#FAF4EE] dark:bg-[#0A211A] shrink-0">
               <h3 className="text-sm font-semibold tracking-tight text-[#282828] dark:text-[#F1F7F4] font-sans">{title}</h3>
               <button
               onClick={onClose}
+              type="button"
               className="rounded-md p-1 text-[#282828]/50 hover:bg-[#EFE6DE] dark:text-[#B7C9C2] dark:hover:bg-[#15362B] hover:text-[#282828] dark:hover:text-[#F1F7F4] transition-colors cursor-pointer"
               aria-label="Close modal">
               
@@ -66,7 +67,7 @@ export const Modal = ({
               </button>
             </div>
           }
-          <div className="p-6 text-[#282828] dark:text-[#F1F7F4]">{children}</div>
+          <div className="p-6 text-[#282828] dark:text-[#F1F7F4] overflow-y-auto flex-1">{children}</div>
         </div>
       </div>
     </div>);

@@ -59,6 +59,7 @@ export const Button = ({
   disabled,
   children,
   className = '',
+  type = 'button',
   ...props
 }) => {
   const baseClasses =
@@ -89,6 +90,7 @@ export const Button = ({
 
   return (
     <button
+      type={type}
       className={`${baseClasses} ${sizeClasses[size]} ${combinedVariantClasses}`}
       disabled={disabled || loading}
       {...props}>

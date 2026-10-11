@@ -25,10 +25,12 @@ let _dbPath = null;
 
 function getDbPath() {
   if (_dbPath) return _dbPath;
-  // Try project root first
+  // Try project root first, verifying actual write capability
   try {
     const dir = path.dirname(PROJECT_DB_PATH);
-    fs.accessSync(dir, fs.constants.W_OK);
+    const probe = path.join(dir, `.write_probe_${Date.now()}`);
+    fs.writeFileSync(probe, '1', 'utf8');
+    fs.unlinkSync(probe);
     _dbPath = PROJECT_DB_PATH;
   } catch {
     _dbPath = TMP_DB_PATH;
@@ -38,22 +40,29 @@ function getDbPath() {
 
 /**
  * Read the entire database JSON file.
+ * Automatically chooses the newest available file between TMP_DB_PATH and PROJECT_DB_PATH.
  * Returns parsed object or null on error.
  */
 export function readDb() {
-  const filePath = getDbPath();
-  // Also try the project path in case tmp was chosen before but project is writable
-  for (const fp of [filePath, PROJECT_DB_PATH, TMP_DB_PATH]) {
+  let newestData = null;
+  let newestMtime = -1;
+
+  for (const fp of [TMP_DB_PATH, PROJECT_DB_PATH]) {
     try {
       if (fs.existsSync(fp)) {
-        const raw = fs.readFileSync(fp, 'utf8');
-        return JSON.parse(raw);
+        const stat = fs.statSync(fp);
+        if (stat.mtimeMs > newestMtime) {
+          const raw = fs.readFileSync(fp, 'utf8');
+          const parsed = JSON.parse(raw);
+          newestMtime = stat.mtimeMs;
+          newestData = parsed;
+        }
       }
     } catch {
-      // continue to next
+      // continue to next candidate
     }
   }
-  return null;
+  return newestData;
 }
 
 /**

@@ -197,6 +197,7 @@ export const AdminDashboardPage = ({ navigate }) => {
   const [savingBotContent, setSavingBotContent] = useState(false);
   const [editingCommand, setEditingCommand] = useState(null);
   const [isSavingCourse, setIsSavingCourse] = useState(false);
+  const [courseError, setCourseError] = useState(null);
 
   // Forms
   const [courseForm, setCourseForm] = useState({
@@ -380,25 +381,48 @@ export const AdminDashboardPage = ({ navigate }) => {
   // Handlers for Courses
   const handleSaveCourse = async (e) => {
     e.preventDefault();
+    setCourseError(null);
+
+    const titleTrimmed = (courseForm.title || '').trim();
+    if (!titleTrimmed) {
+      setCourseError('Course title is required.');
+      return;
+    }
+
+    // Auto-generate description if user leaves it blank so submission is never blocked
+    const descriptionTrimmed = (courseForm.description || '').trim() ||
+      `${titleTrimmed} - Comprehensive curriculum and hands-on training offered by the IT Club.`;
+
+    const payload = {
+      ...courseForm,
+      title: titleTrimmed,
+      description: descriptionTrimmed,
+      longDescription: (courseForm.longDescription || '').trim() || descriptionTrimmed
+    };
+
     setIsSavingCourse(true);
     try {
       if (activeItem?.id) {
-        const res = await api.updateAdminCourse(activeItem.id, courseForm);
-        if (res?.course) {
-          setCoursesList((prev) => prev.map((c) => (c.id === activeItem.id ? res.course : c)));
-        }
+        const res = await api.updateAdminCourse(activeItem.id, payload);
+        const updatedCourse = res?.course || { ...activeItem, ...payload };
+        setCoursesList((prev) => prev.map((c) => (c.id === activeItem.id ? updatedCourse : c)));
         showToast('Course updated successfully!');
       } else {
-        const res = await api.createAdminCourse(courseForm);
-        if (res?.course) {
-          setCoursesList((prev) => [...prev.filter((c) => c.id !== res.course.id), res.course]);
-        }
+        const res = await api.createAdminCourse(payload);
+        const newCourse = res?.course || { ...payload, id: `crs_${Date.now()}` };
+        setCoursesList((prev) => [newCourse, ...prev.filter((c) => c.id !== newCourse.id)]);
         showToast('Course created successfully!');
       }
       setModalType(null);
-      await loadAllAdminData();
+      setCourseError(null);
+      // Refresh overview stats asynchronously without overwriting coursesList
+      api.getAdminOverview().then((ovRes) => {
+        if (ovRes?.stats) setOverview(ovRes.stats);
+      }).catch(() => {});
     } catch (err) {
-      showToast(err.message || 'Error saving course', 'error');
+      const msg = err.message || 'Error saving course. Please check all required fields.';
+      setCourseError(msg);
+      showToast(msg, 'error');
     } finally {
       setIsSavingCourse(false);
     }
@@ -904,7 +928,7 @@ export const AdminDashboardPage = ({ navigate }) => {
       {/* Toast */}
       {feedback &&
         <div
-          className={`fixed top-4 right-4 z-50 px-4 py-2.5 rounded-md shadow-xl flex items-center gap-2 text-xs font-mono uppercase tracking-wider border animate-in fade-in ${feedback.type === 'success' ?
+          className={`fixed top-4 right-4 z-[100] px-4 py-2.5 rounded-md shadow-xl flex items-center gap-2 text-xs font-mono uppercase tracking-wider border animate-in fade-in ${feedback.type === 'success' ?
               'bg-emerald-900 text-emerald-100 border-emerald-700' :
               'bg-rose-900 text-rose-100 border-rose-700'}`
           }>
@@ -1344,6 +1368,7 @@ export const AdminDashboardPage = ({ navigate }) => {
                   size="sm"
                   onClick={() => {
                     setActiveItem(null);
+                    setCourseError(null);
                     setCourseForm({
                       title: '',
                       description: '',
@@ -1424,6 +1449,7 @@ export const AdminDashboardPage = ({ navigate }) => {
                           className="text-xs py-1"
                           onClick={() => {
                             setActiveItem(c);
+                            setCourseError(null);
                             setCourseForm(c);
                             setModalType('course');
                           }}>
@@ -2684,18 +2710,32 @@ export const AdminDashboardPage = ({ navigate }) => {
       {/* MODAL: ADD / EDIT COURSE */}
       <Modal
         isOpen={modalType === 'course'}
-        onClose={() => setModalType(null)}
+        onClose={() => {
+          setModalType(null);
+          setCourseError(null);
+        }}
         title={activeItem ? 'Edit Course' : 'Create New Course'}
         maxWidth="lg">
 
         <form onSubmit={handleSaveCourse} className="space-y-4 text-xs">
+          {courseError && (
+            <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-300 text-xs flex items-center gap-2">
+              <XCircle className="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400" />
+              <span>{courseError}</span>
+            </div>
+          )}
+
           <div>
-            <label className="block font-bold text-[#282828] dark:text-[#B7C9C2] mb-1">Course Title</label>
+            <label className="block font-bold text-[#282828] dark:text-[#B7C9C2] mb-1">Course Title *</label>
             <input
               type="text"
               required
+              placeholder="e.g. Modern Full-Stack Development"
               value={courseForm.title}
-              onChange={(e) => setCourseForm({ ...courseForm, title: e.target.value })}
+              onChange={(e) => {
+                setCourseForm({ ...courseForm, title: e.target.value });
+                if (courseError) setCourseError(null);
+              }}
               className="w-full px-3 py-2 border border-[#282828]/20 dark:border-[#294B40] bg-white dark:bg-[#0C241C] text-[#282828] dark:text-[#F1F7F4] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FC6454]/40 dark:focus:ring-[#6BB89E]/40" />
 
           </div>
@@ -2790,7 +2830,7 @@ export const AdminDashboardPage = ({ navigate }) => {
             <label className="block font-bold text-[#282828] dark:text-[#B7C9C2] mb-1">Short Description</label>
             <textarea
               rows={2}
-              required
+              placeholder="Brief course overview (optional, auto-generated if left blank)"
               value={courseForm.description}
               onChange={(e) => setCourseForm({ ...courseForm, description: e.target.value })}
               className="w-full px-3 py-2 border border-[#282828]/20 dark:border-[#294B40] bg-white dark:bg-[#0C241C] text-[#282828] dark:text-[#F1F7F4] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FC6454]/40 dark:focus:ring-[#6BB89E]/40" />
@@ -2800,6 +2840,7 @@ export const AdminDashboardPage = ({ navigate }) => {
             <label className="block font-bold text-[#282828] dark:text-[#B7C9C2] mb-1">Detailed Long Description</label>
             <textarea
               rows={3}
+              placeholder="Comprehensive syllabus, objectives and weekly breakdown..."
               value={courseForm.longDescription}
               onChange={(e) => setCourseForm({ ...courseForm, longDescription: e.target.value })}
               className="w-full px-3 py-2 border border-[#282828]/20 dark:border-[#294B40] bg-white dark:bg-[#0C241C] text-[#282828] dark:text-[#F1F7F4] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FC6454]/40 dark:focus:ring-[#6BB89E]/40" />
@@ -2832,8 +2873,8 @@ export const AdminDashboardPage = ({ navigate }) => {
 
           </div>
 
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="ghost" size="sm" onClick={() => setModalType(null)}>Cancel</Button>
+          <div className="sticky bottom-0 bg-white dark:bg-[#102B22] pt-3 pb-1 -mx-6 px-6 -mb-6 border-t border-[#282828]/10 dark:border-[#25473C] flex justify-end gap-2 z-10 shadow-xs">
+            <Button type="button" variant="ghost" size="sm" onClick={() => { setModalType(null); setCourseError(null); }}>Cancel</Button>
             <Button type="submit" variant="primary" size="sm" loading={isSavingCourse}>
               {activeItem ? 'Save Changes' : 'Create Course'}
             </Button>
